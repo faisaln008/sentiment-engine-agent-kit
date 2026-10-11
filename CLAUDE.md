@@ -189,7 +189,7 @@ Model IDs on free tiers change frequently — **verify against provider docs at 
 | `spec-architect` | `specs/**`, `packages/contracts/**` (pre-freeze only) | app code |
 | `backend-dev` | `apps/backend/src/**`, `apps/backend/test/**`, root configs | frontend, specs, eval datasets |
 | `frontend-dev` | `apps/frontend/**` | backend, contracts |
-| `eval-engineer` | `apps/backend/eval/**`, `reports/**`, `apps/backend/src/llm/prompt.ts` (prompt iterations only) | other src |
+| `eval-engineer` | `apps/backend/eval/**`, `reports/**`, `apps/backend/src/llm/prompt.ts` (prompt iterations only), the `eval*` / `bench` / `simulate` script entries in `apps/backend/package.json` and root `package.json` (human-approved 2026-10-11) | other src, other package.json fields |
 | `code-reviewer` | `.agent-work/reviews/**` only (read-only on code) | all code |
 | `security-auditor` | `.agent-work/security/**` only | all code |
 | `docs-writer` | `*.md` at root, `docs/**` | code, specs |

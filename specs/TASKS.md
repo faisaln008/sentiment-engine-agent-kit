@@ -48,10 +48,10 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - [x] `boot.no-keys.serves-heuristic`; **`pipeline.empty-text-neutral` (`""`) and `pipeline.whitespace-text-neutral` (`"   "`, `"\n\t"`)** → 200 neutral, classifier not called (spy), uses `isBlankText`
 
 ## S2a — Dataset v1 · eval-engineer · 40 min · deps: FREEZE (parallel with S0/S1)
-- [ ] **≥ 80 chunks, ≥ 10 sessions**, `apps/backend/eval/datasets/*.jsonl` + `SCHEMA.md`; labels + `acceptable_sentiments` + rationale written **before** any model run
-- [ ] Coverage matrix per eval-methodology skill (7 labels × both speakers, 4 risk levels, volatility true/false, agree vs contradict, counterfactual + context-flip pairs, hard negatives, ≥ 3 injection chunks)
-- [ ] The brief's example sentence pattern appears in ≥ 3 contexts with **different** labels
-- [ ] Split `tune.jsonl` / `holdout.jsonl` by session (75/25); smoke subset of 15 tagged
+- [x] **≥ 80 chunks, ≥ 10 sessions**, `apps/backend/eval/datasets/*.jsonl` + `SCHEMA.md`; labels + `acceptable_sentiments` + rationale written **before** any model run
+- [x] Coverage matrix per eval-methodology skill (7 labels × both speakers, 4 risk levels, volatility true/false, agree vs contradict, counterfactual + context-flip pairs, hard negatives, ≥ 3 injection chunks)
+- [x] The brief's example sentence pattern appears in ≥ 3 contexts with **different** labels
+- [x] Split `tune.jsonl` / `holdout.jsonl` by session (75/25); smoke subset of 15 tagged
 
 ## S2b — run-eval.ts · eval-engineer · 25 min · deps: S2a, S1b
 - [ ] Replaces the S0 stub script; `npm run eval -- --target <url> --label <name> [--split] [--smoke]`; payloads typed by `TelemetryRequestWireSchema`; sessions parallel (≤ RPM), chunks sequential in timestamp order
@@ -155,3 +155,6 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - T4 (S5a, S1-r1 N4/N11) Pass speaker-baseline z-scores into the heuristic; move unknown-speaker warned-set into SessionStore.
 - T5 (S3a/S4a, S1-r1 N1/N7/N13) Log swallowed classifier exceptions and ≥500 errors (err.code only for 4xx, never text); chain enforces deadline itself.
 - T6 (any backend slice, S1-r1 N2/N5/N8/N9/N10/N12/N14) Test hardening: sync-throw classifier, perf assertion → 1 ms/median, no-echo for invalid text + malformed JSON, info-level log-key assertion, WARN-once, 20-parallel chunk_id echo; precompile regexes.
+- T7 (backend-dev, before S2b approval; S2a-r1 N12) Gate typecheck must cover `apps/backend/eval/**/*.ts` and `apps/backend/test/**/*.ts` (e.g. `tsconfig.eval.json` noEmit, same strict flags, references contracts) chained into root `typecheck`.
+- T8 (eval-engineer, S2b; S2a-r1 N3–N11, r2 N1) Dataset polish + reporting: clean 4th counterfactual pair (cf-number confounded); s06_c08 tie-break; s09_c04 context; s07_c08 missing payment-terms turn; sincere "Sure, that works" + non-deferral "stakeholders"; s10_c06 risk consistency; SCHEMA rule wording (per-speaker, delivery-spike anchor). S2b reports must print the constant-neutral lenient floor (45.3% overall, 6/15 smoke); smoke threshold on lenient accuracy well above floor; smoke numbers never cited as quality. Label edits only with rationale + changelog.
+- T9 (S5a/S5b; S2a-r1 N2) Pin sample vs population std; unit-test that the speaker baseline excludes the current chunk (5 of the true labels depend on it). ADR-003 evidence: formula flags de-escalations and misses flat-delivery stance flips (see S2a validator table).
