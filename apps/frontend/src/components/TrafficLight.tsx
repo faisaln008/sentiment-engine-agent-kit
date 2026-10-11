@@ -1,11 +1,5 @@
 import type { RiskLevel, Sentiment } from '@app/contracts';
-
-const META: Record<RiskLevel, { icon: string; label: string }> = {
-  low: { icon: '✓', label: 'LOW' },
-  medium: { icon: '!', label: 'MEDIUM' },
-  high: { icon: '▲', label: 'HIGH' },
-  critical: { icon: '⛔', label: 'CRITICAL' },
-};
+import { RISK_META } from '../lib/risk';
 
 interface Props {
   risk: RiskLevel | null;
@@ -13,13 +7,16 @@ interface Props {
 }
 
 export function TrafficLight({ risk, sentiment }: Props) {
-  const m = risk ? META[risk] : null;
-  // Critical is announced assertively once, when the element mounts.
-  const alertProps = risk === 'critical' ? { role: 'alert' } : { role: 'status' };
+  const m = risk ? RISK_META[risk] : null;
   return (
     <section className="panel light-panel" aria-label="Risk level">
       <h2 className="panel-title">Risk</h2>
-      <div className={`light risk-${risk ?? 'none'}`} {...alertProps}>
+      {/* key remounts the node on every level change so role=alert (critical) is announced afresh */}
+      <div
+        key={risk ?? 'none'}
+        className={`light risk-${risk ?? 'none'}`}
+        role={m?.role ?? 'status'}
+      >
         <span className="light-icon" aria-hidden="true">
           {m?.icon ?? '–'}
         </span>

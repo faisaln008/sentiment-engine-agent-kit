@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { mitigationHistory } from '../lib/mitigation';
 import type { StreamItem } from '../lib/store';
 
 interface Props {
@@ -7,18 +8,25 @@ interface Props {
 }
 
 export function Mitigation({ items }: Props) {
-  const [copied, setCopied] = useState(false);
-  const current = items[0]?.result.mitigation_suggestion ?? null;
-  const previous = items.slice(1, 3);
+  const [label, setLabel] = useState('Copy');
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const { current, previous } = mitigationHistory(items);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const flash = (text: string) => {
+    setLabel(text);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setLabel('Copy'), 1500);
+  };
 
   const copy = () => {
     if (!current) return;
+    // navigator.clipboard is undefined in insecure contexts.
+    if (!navigator.clipboard) return flash('Copy unavailable');
     navigator.clipboard.writeText(current).then(
-      () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      },
-      () => console.warn('clipboard unavailable'),
+      () => flash('Copied'),
+      () => flash('Copy failed'),
     );
   };
 
@@ -29,12 +37,12 @@ export function Mitigation({ items }: Props) {
         {current ?? 'Waiting for the first chunk…'}
       </p>
       <button type="button" className="btn" onClick={copy} disabled={!current}>
-        {copied ? 'Copied' : 'Copy'}
+        {label}
       </button>
       {previous.length > 0 && (
         <ol className="mitigation-prev" aria-label="Previous suggestions">
-          {previous.map((i) => (
-            <li key={i.chunk_id}>{i.result.mitigation_suggestion}</li>
+          {previous.map((m) => (
+            <li key={m}>{m}</li>
           ))}
         </ol>
       )}

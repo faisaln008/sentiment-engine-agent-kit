@@ -121,9 +121,9 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - [x] Build passes; screenshot attached to handoff
 
 ## S6c — WS hook + header + basic demo button · frontend-dev · 40 min · deps: S6b, S7a (mock until then)
-- [ ] WS `/ws/telemetry` with backoff 0.5→8 s + jitter; frames validated with `ServerMessageSchema`; merges with POST store
-- [ ] Header shows current session id, connection state, `/health.mode`, rolling p50
-- [ ] **Basic "Play demo" button**: POSTs a short scripted negotiation (≥ 8 chunks, payloads typed by `TelemetryRequestWireSchema`) at 1–3 s cadence; works against the reference backend too. No keyboard shortcuts, session selector or narrow layout (S9 cut)
+- [x] WS `/ws/telemetry` with backoff 0.5→8 s + jitter; frames validated with `ServerMessageSchema`; merges with POST store
+- [x] Header shows current session id, connection state, `/health.mode`, rolling p50
+- [x] **Basic "Play demo" button**: POSTs a short scripted negotiation (≥ 8 chunks, payloads typed by `TelemetryRequestWireSchema`) at 1–3 s cadence; works against the reference backend too. No keyboard shortcuts, session selector or narrow layout (S9 cut)
 
 ## S7a — WS gateway · backend-dev · 20 min · deps: S5b · review: single
 - [ ] `/ws/telemetry`: hello on connect; analysis broadcast after commit; Origin check vs `CORS_ORIGIN` — missing or mismatching ⇒ 1008; drop slow clients > 1 MB buffered

@@ -8,7 +8,7 @@ Screenshot (1280x800, headless Chrome, reference backend, `/?demo=fast`): `.agen
 - VolatilityAlert: `role=alert` banner while active; `useVolatilityActive` = 8 s after newest volatile chunk, restarted by a newer one. Fixed-height slot, so no layout jump.
 - SentimentStream: newest first, time / You|Them / chip / confidence bar (role=img + aria-label) / hidden_intent / ms. Capped by the 200 store ring (not virtualised).
 - All LLM strings are rendered as JSX text (no innerHTML).
-- Dark theme only (fixed palette, light text on dark tints; contrast computed by eye to be >= 7:1 for text, NOT measured with a tool).
+- Dark theme only (fixed palette, light text on dark tints; measured lowest text pair is 5.86:1 (dimmed mitigation history); all pairs >= 4.5:1 per reviewer measurement).
 - Minimal "Play demo" button + `?demo=fast|1` autostart are in (lib/demo.ts, 10 scripted chunks, 1-3 s gaps; `?demo=fast` has no gaps, used for the screenshot). S6c still owns header polish (connection, mode, p50), WS, and review of the demo.
 
 ## S6a review items

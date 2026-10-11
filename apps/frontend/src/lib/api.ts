@@ -1,4 +1,5 @@
 import {
+  HealthSchema,
   TelemetryResponseSchema,
   type TelemetryRequestWire,
   type TelemetryResponse,
@@ -35,6 +36,17 @@ export async function postChunk(
     return parsed.data;
   } catch (err) {
     console.warn('stream POST error', err instanceof Error ? err.name : 'unknown');
+    return null;
+  }
+}
+
+/** GET /health through the proxy. `mode` is free text (the reference reports "placeholder"). */
+export async function fetchMode(signal?: AbortSignal): Promise<string | null> {
+  try {
+    const res = await fetch('/health', { signal: signal ?? AbortSignal.timeout(POST_TIMEOUT_MS) });
+    const parsed = HealthSchema.safeParse(await res.json());
+    return parsed.success ? parsed.data.mode : null;
+  } catch {
     return null;
   }
 }

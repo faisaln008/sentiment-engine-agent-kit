@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react';
 import type { StreamItem } from '../lib/store';
+import { newestVolatileAt, volatilityView, type VolatilityView } from '../lib/volatility';
 
-export const VOLATILITY_DECAY_MS = 8000;
-
-/** True for 8 s after the newest volatile chunk arrived; a newer volatile chunk restarts the timer. */
-export function useVolatilityActive(items: readonly StreamItem[]): boolean {
-  const volatileId = items.find((i) => i.result.volatility_flag)?.chunk_id ?? null;
-  const [active, setActive] = useState(false);
+/** Re-evaluates once a second while a volatile chunk is inside the decay window. */
+export function useVolatilityView(items: readonly StreamItem[]): VolatilityView | null {
+  const at = newestVolatileAt(items);
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (!volatileId) {
-      setActive(false);
-      return;
-    }
-    setActive(true);
-    const t = setTimeout(() => setActive(false), VOLATILITY_DECAY_MS);
-    return () => clearTimeout(t);
-  }, [volatileId]);
-  return active;
+    if (at === null) return;
+    setNow(Date.now());
+    const t = setInterval(() => {
+      const n = Date.now();
+      setNow(n);
+      if (volatilityView(items, n) === null) clearInterval(t);
+    }, 1000);
+    return () => clearInterval(t);
+    // items identity changes every ingest; `at` is what (re)arms the window.
+  }, [at]);
+  return volatilityView(items, Math.max(now, at ?? 0));
 }

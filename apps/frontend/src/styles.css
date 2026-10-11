@@ -262,3 +262,20 @@ body {
     animation: none;
   }
 }
+
+.alert-recent {
+  background: #4a3a05;
+  color: #ffdf7a;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 2px solid #b8901a;
+}
+.alert-detail {
+  font-weight: 500;
+}
+.header {
+  flex-wrap: wrap;
+  font-size: 14px;
+}

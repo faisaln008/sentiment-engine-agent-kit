@@ -1,51 +1,31 @@
-import { useEffect, useRef, useState } from 'react';
+import { Header } from './components/Header';
 import { Mitigation } from './components/Mitigation';
 import { SentimentStream } from './components/SentimentStream';
 import { TrafficLight } from './components/TrafficLight';
 import { VolatilityAlert } from './components/VolatilityAlert';
+import { useDemo } from './hooks/useDemo';
 import { useTelemetry } from './hooks/useTelemetry';
-import { useVolatilityActive } from './hooks/useVolatility';
-import { buildDemoRequests } from './lib/demo';
+import { useVolatilityView } from './hooks/useVolatility';
+import { serverP50 } from './lib/stats';
 import './styles.css';
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 export function App() {
-  const { state, send } = useTelemetry();
-  const [playing, setPlaying] = useState(false);
-  const run = useRef(0);
+  const { state, ws, mode, send, pin } = useTelemetry();
+  const { playing, play } = useDemo({ send, pin });
   const items = state.activeSessionId ? (state.sessions[state.activeSessionId] ?? []) : [];
   const latest = items[0];
-  const volatile = useVolatilityActive(items);
-
-  const play = async (fast: boolean) => {
-    const id = ++run.current;
-    setPlaying(true);
-    for (const req of buildDemoRequests()) {
-      if (run.current !== id) return;
-      await send(req);
-      if (!fast) await sleep(1000 + Math.random() * 2000);
-    }
-    if (run.current === id) setPlaying(false);
-  };
-
-  useEffect(() => {
-    const demo = new URLSearchParams(window.location.search).get('demo');
-    if (demo) void play(demo === 'fast');
-    return () => {
-      run.current++;
-    };
-  }, []);
+  const volatility = useVolatilityView(items);
 
   return (
     <div className="app">
-      <header className="header">
-        <h1>Negotiation Copilot</h1>
-        <span className="dim">Session: {state.activeSessionId ?? '—'}</span>
-        <button type="button" className="btn" disabled={playing} onClick={() => void play(false)}>
-          {playing ? 'Playing…' : 'Play demo'}
-        </button>
-      </header>
+      <Header
+        sessionId={state.activeSessionId}
+        ws={ws}
+        mode={mode}
+        p50={serverP50(items)}
+        playing={playing}
+        onPlay={() => void play(false)}
+      />
       <main className="main">
         <div className="top">
           <TrafficLight
@@ -54,7 +34,7 @@ export function App() {
           />
           <Mitigation items={items} />
         </div>
-        <VolatilityAlert active={volatile} />
+        <VolatilityAlert view={volatility} />
         <SentimentStream items={items} />
       </main>
     </div>
