@@ -31,21 +31,21 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - [x] `npm run gate` runs end-to-end green (eval/bench SKIPPED is OK)
 
 ## S1a — Stream endpoint skeleton + health · backend-dev · 25 min · deps: S0 · review: paired with S1b
-- [ ] `config.ts` parses env with zod; missing keys ⇒ WARN once, never crash
-- [ ] `POST /api/telemetry/stream`: `TelemetryRequestSchema` → service → `TelemetryResponseSchema.parse` → send; bodyLimit 32 KB
-- [ ] 400 `{error:"invalid_request", issues}` for missing/invalid `chunk_id`/`session_id`/`text` and malformed JSON; zod 4 `path` arrays joined with `.`; `text` never echoed
-- [ ] Unknown-speaker warn reads the raw body value (parsed value can't distinguish)
-- [ ] `domain/truncate.ts` per SPEC §2.2 with unit tests (60/120, underscore boundary, no "…")
-- [ ] `GET /health` → `{status:"ok", mode, version, timestamp}`; mode matches `OUR_HEALTH_MODE_RE`
-- [ ] `processing_latency_ms` via `performance.now()` from handler entry
-- [ ] Tests (`app.inject`): `contract.missing-text-400`, `contract.malformed-body-400`, `contract.missing-acoustics-200`, `contract.unknown-speaker`, `contract.body-too-large-413`, `contract.bad-timestamp-200` (`timestamp_ms: 1e20` and `"abc"` → 200), `contract.zod4-missing-keys-200`, **`contract.id-length-512`** (512-char `chunk_id`/`session_id` → 200 and echoed; 513 → 400)
+- [x] `config.ts` parses env with zod; missing keys ⇒ WARN once, never crash
+- [x] `POST /api/telemetry/stream`: `TelemetryRequestSchema` → service → `TelemetryResponseSchema.parse` → send; bodyLimit 32 KB
+- [x] 400 `{error:"invalid_request", issues}` for missing/invalid `chunk_id`/`session_id`/`text` and malformed JSON; zod 4 `path` arrays joined with `.`; `text` never echoed
+- [x] Unknown-speaker warn reads the raw body value (parsed value can't distinguish)
+- [x] `domain/truncate.ts` per SPEC §2.2 with unit tests (60/120, underscore boundary, no "…")
+- [x] `GET /health` → `{status:"ok", mode, version, timestamp}`; mode matches `OUR_HEALTH_MODE_RE`
+- [x] `processing_latency_ms` via `performance.now()` from handler entry
+- [x] Tests (`app.inject`): `contract.missing-text-400`, `contract.malformed-body-400`, `contract.missing-acoustics-200`, `contract.unknown-speaker`, `contract.body-too-large-413`, `contract.bad-timestamp-200` (`timestamp_ms: 1e20` and `"abc"` → 200), `contract.zod4-missing-keys-200`, **`contract.id-length-512`** (512-char `chunk_id`/`session_id` → 200 and echoed; 513 → 400)
 
 ## S1b — Heuristic classifier v1 + reference contract test · backend-dev · 20 min · deps: S1a · review: paired with S1a
-- [ ] `heuristics/` implements `Classifier` port; word-boundary regex lexicon ("no" ≠ "know" test); deflection + ultimatum markers; confidence ≤ 0.6; always `ok:true`
-- [ ] Emits all 7 labels on at least one unit-test input each (inputs invented, not from the brief)
-- [ ] Contract test: the brief's sample request shape → 200 + schema-valid, **asserting shape only, not the label**
-- [ ] Contract test: our `/health` and response keys ⊇ reference keys; record reference empty-body behaviour in handoff (SPEC §2.4)
-- [ ] `boot.no-keys.serves-heuristic`; **`pipeline.empty-text-neutral` (`""`) and `pipeline.whitespace-text-neutral` (`"   "`, `"\n\t"`)** → 200 neutral, classifier not called (spy), uses `isBlankText`
+- [x] `heuristics/` implements `Classifier` port; word-boundary regex lexicon ("no" ≠ "know" test); deflection + ultimatum markers; confidence ≤ 0.6; always `ok:true`
+- [x] Emits all 7 labels on at least one unit-test input each (inputs invented, not from the brief)
+- [x] Contract test: the brief's sample request shape → 200 + schema-valid, **asserting shape only, not the label**
+- [x] Contract test: our `/health` and response keys ⊇ reference keys; record reference empty-body behaviour in handoff (SPEC §2.4)
+- [x] `boot.no-keys.serves-heuristic`; **`pipeline.empty-text-neutral` (`""`) and `pipeline.whitespace-text-neutral` (`"   "`, `"\n\t"`)** → 200 neutral, classifier not called (spy), uses `isBlankText`
 
 ## S2a — Dataset v1 · eval-engineer · 40 min · deps: FREEZE (parallel with S0/S1)
 - [ ] **≥ 80 chunks, ≥ 10 sessions**, `apps/backend/eval/datasets/*.jsonl` + `SCHEMA.md`; labels + `acceptable_sentiments` + rationale written **before** any model run
@@ -149,4 +149,9 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - ~~S9 — Demo player polish~~ (H5): keyboard shortcuts, session selector, narrow-screen layout. A basic demo button lives in S6c.
 
 ## Ticket lines for TODOs
-(none yet)
+- T1 (S4b, from S1-r1 N3) Heuristic negation: "This is not good." → positive; ULTIMATUM ignores negation ("We don't want to walk away" → critical).
+- T2 (S4b, S1-r1 N3) Over-broad markers: "sign today" → aggressive/critical; sincere "thanks a lot" / "Sure, that works" / "make sure" → sarcastic; "You never know" → aggressive; board/legal/stakeholders unconditional → narrow to deferral constructions. `pick()` precedence only for equal fits.
+- T3 (S2a, S1-r1 N3) Add the T1/T2 sentences (reworded, invented) as adversarial dataset cases.
+- T4 (S5a, S1-r1 N4/N11) Pass speaker-baseline z-scores into the heuristic; move unknown-speaker warned-set into SessionStore.
+- T5 (S3a/S4a, S1-r1 N1/N7/N13) Log swallowed classifier exceptions and ≥500 errors (err.code only for 4xx, never text); chain enforces deadline itself.
+- T6 (any backend slice, S1-r1 N2/N5/N8/N9/N10/N12/N14) Test hardening: sync-throw classifier, perf assertion → 1 ms/median, no-echo for invalid text + malformed JSON, info-level log-key assertion, WARN-once, 20-parallel chunk_id echo; precompile regexes.

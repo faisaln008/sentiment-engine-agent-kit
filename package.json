@@ -12,7 +12,7 @@
   "scripts": {
     "build": "npm run -w packages/contracts build && npm run -w apps/backend build",
     "start": "npm run build && npm run -w apps/backend start",
-    "dev": "npm run -w apps/backend dev",
+    "dev": "npm run -w packages/contracts build && npm run -w apps/backend dev",
     "dev:frontend": "npm run -w apps/frontend dev",
     "typecheck": "tsc -b packages/contracts apps/backend",
     "lint": "eslint . --max-warnings=0 && prettier --check .",
