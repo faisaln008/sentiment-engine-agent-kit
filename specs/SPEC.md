@@ -168,7 +168,7 @@ See **ADR-001**. Summary: one OpenAI-compatible adapter; Groq `llama-3.1-8b-inst
 | **Total** | **≤ 245** |
 
 (No cache stage — cut, §6.) p95 < 500 is bounded structurally: deadline 450 from t0 + ~5 ms local work; with no timer hedge, a slow primary yields a heuristic answer at ~450 ms rather than a fallback-LLM answer. Off the hot path: WS broadcast, metrics (commit is a same-tick synchronous step after send).
-Gate: `scripts/gate.mjs` fails on p50 > 250 or p95 > 500 from `reports/bench-latest.md`.
+Gate: `scripts/gate.mjs` runs `bench --quick` and reads its metrics comment from **`reports/bench-quick.md`**. That file is transient and git-ignored, and is deleted before each run; the gate fails if it is missing, has no metrics, or shows p50 > 250 or p95 > 500. Docs (ARCHITECTURE.md, README) cite only the committed full-bench report **`reports/bench-latest.md`**, never `bench-quick.md` (T12, 2026-10-11).
 
 ## 9. Failure modes
 

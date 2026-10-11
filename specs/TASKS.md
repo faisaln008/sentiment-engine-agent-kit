@@ -128,8 +128,8 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - [x] **Basic "Play demo" button**: POSTs a short scripted negotiation (≥ 8 chunks, payloads typed by `TelemetryRequestWireSchema`) at 1–3 s cadence; works against the reference backend too. No keyboard shortcuts, session selector or narrow layout (S9 cut)
 
 ## S7a — WS gateway · backend-dev · 20 min · deps: S5b · review: single
-- [ ] `/ws/telemetry`: hello on connect; analysis broadcast after commit; Origin check vs `CORS_ORIGIN` — missing or mismatching ⇒ 1008; drop slow clients > 1 MB buffered
-- [ ] Tests `ws.origin-rejected`, `ws.origin-missing-rejected`, `ws.slow-client-dropped` + one e2e receive test
+- [x] `/ws/telemetry`: hello on connect; analysis broadcast after commit; Origin check vs `CORS_ORIGIN` — missing or mismatching ⇒ 1008; drop slow clients > 1 MB buffered
+- [x] Tests `ws.origin-rejected`, `ws.origin-missing-rejected`, `ws.slow-client-dropped` + one e2e receive test
 
 ## S8a — Prompt iterations (≤ 3) · eval-engineer · 40 min · deps: S5b, S3c
 - [ ] Each iteration: one hypothesis, one change in `prompt.ts` (bump `PROMPT_VERSION`), re-run tune on the CP1 winner model; keep iff macro-F1 ↑ and p50 Δ < +20 ms
@@ -140,10 +140,10 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - [ ] Volatility weights/threshold change (if any) proposed to spec-architect for ADR-003 with report link
 
 ## S10 — Session summary endpoint · backend-dev · 15 min · deps: S5a counters · review: single · **second cut, kept until CP2 (H4)**
-- [ ] `GET /api/telemetry/session/:sessionId/summary` per SPEC §5.4 from running counters; `SessionSummarySchema.parse` before send
-- [ ] `aggregated_volatility_score` = flagged/chunk_count (2dp); `top_risk_moments` only high/critical, risk desc then most recent first, ≤ 3, may be `[]`; `text_excerpt` real text ≤ 80
-- [ ] 404 `{error:"session_not_found"}` for unknown and evicted sessions
-- [ ] Integration test incl. unknown session, duplicate chunk not double-counted, tie-break on dominant sentiment
+- [x] `GET /api/telemetry/session/:sessionId/summary` per SPEC §5.4 from running counters; `SessionSummarySchema.parse` before send
+- [x] `aggregated_volatility_score` = flagged/chunk_count (2dp); `top_risk_moments` only high/critical, risk desc then most recent first, ≤ 3, may be `[]`; `text_excerpt` real text ≤ 80
+- [x] 404 `{error:"session_not_found"}` for unknown and evicted sessions
+- [x] Integration test incl. unknown session, duplicate chunk not double-counted, tie-break on dominant sentiment
 
 ---
 ## Cut slices (human decision 2026-10-11 — do not implement)
@@ -162,7 +162,7 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - T9 (S5a/S5b; S2a-r1 N2) Pin sample vs population std; unit-test that the speaker baseline excludes the current chunk (5 of the true labels depend on it). ADR-003 evidence: formula flags de-escalations and misses flat-delivery stance flips (see S2a validator table).
 - T10 (eval-engineer, S8a; S3-r2 N4) Trim system prompt toward ≤ 550 tokens (now ~680); throughput at 8000 TPM depends on it.
 - T11 (backend-dev, S4b; S3-r1 N3/N5/N9/N10, S3-r2 N1/N6/N7) Exception log with chunk_id/session_id; parse `"c":""`→0.5 and balanced-brace scan; error-handler 4xx/5xx tests; deadline test without wall-clock bounds; SPEC §9 test names; warm-up log test; split analyzeChunk.
-- T12 (spec-architect; S3-r2 N8) SPEC §8: gate reads reports/bench-quick.md (transient, git-ignored); docs cite bench-latest.md.
+- [done 2026-10-11] T12 (spec-architect; S3-r2 N8) SPEC §8: gate reads reports/bench-quick.md (transient, git-ignored); docs cite bench-latest.md.
 - T13 (backend-dev, S4b/any; S4a-r2 N1–N4) inflight-released throw-half call count; breaker.stuck-probe-expires test; WARN only on closed→open; strip `skip` on aborted-at-top result.
 - T14 (human/docs; S4a-r2 N5) Gemini-only deployments under LLM_DEADLINE_MS 450 are mostly heuristic (Gemini p50 ~681 ms on project key); document raising LLM_DEADLINE_MS in SETUP (trade-off: p95 > 500).
 - T15 (backend-dev; S4b-r2 N2) Ultimatum date marker (`sign … by <day>`) requires a consequence clause or caps risk at high — "Please sign by Friday so we can start onboarding" is critical today.
@@ -171,4 +171,6 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - T18 (backend-dev; S5-r2 N1/N3) defang hardening: NFKC + strip \p{Cf} before defang, collapse whitespace in TEXT; snapshot always skips own chunk_id (missing-timestamp duplicate).
 - T19 (backend-dev; S5-r1 N8/N9/N12, S5-r2 N2) heuristic fallback arousal() uses SPEC §4 priors via domain zScores; tests for ids FIFO 5000 eviction and TTL timer unref/stop; abort test awaits server-side close; document mixed missing/relative timestamps. Security-auditor: ids Set worst case (5000 × 512 chars × MAX_SESSIONS) — consider hashing.
 - T20 (eval-engineer; S5-r1 N5, S5-r2 N4) volatility-oracle epsilon (`v + 1e-9 >= threshold`) to match domain/fusion.ts; re-run tune on prompt v1.3 before citing any LLM numbers; LLM-path bench (p50/p95, 429 count) at ~864 tokens vs 8000 TPM.
-- T21 (spec-architect; S5-r1 B2) ADR-003 §3: equal timestamp_ms ordered by arrival (orchestrator decision 2026-10-11).
+- [done 2026-10-11] T21 (spec-architect; S5-r1 B2) ADR-003 §3: equal timestamp_ms ordered by arrival (orchestrator decision 2026-10-11).
+- T22 (backend-dev; S7a-S10-r2 N1/N2/N3/N5) DEADLINE_CONSEQUENCE `or (i|you)` needs a threat verb; reasoning retry only if effort was sent; failed-attempt log carries chunk_id/session_id; heartbeat test with fake timers + answering client.
+- T23 (docs-writer/security-auditor; S7a-S10 r1 N5, r2 N4) cross-session WS broadcast of excerpts to all allowed-origin clients; qwen3.8-27b is a Groq Preview model, evaluator key access may differ — SETUP model overrides.

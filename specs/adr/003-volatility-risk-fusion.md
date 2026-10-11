@@ -22,7 +22,8 @@ code does math. Canonical formula and floors: `.claude/skills/nuance-taxonomy/SK
    Pause is excluded from arousal (it signals hesitation, used as a prompt descriptor instead).
 3. **Volatility** (skill formula, with normalisation we had to define):
    `v = clamp01( 0.4·min(1, |arousal_z − prev_arousal_z| / 2) + 0.4·valence_shift + 0.2·pitch_volatility )`
-   - "prev" = the **same speaker's** most recent committed chunk with `timestamp_ms` < current (snapshot at arrival).
+   - "prev" = the **same speaker's** most recent committed chunk that orders before the current one (snapshot at arrival).
+     **Ordering key = (`timestamp_ms`, arrival order).** Equal `timestamp_ms` values are ordered by arrival: the earlier-arrived chunk comes first and counts as "prev" for the later one (T21, orchestrator decision 2026-10-11). The same key orders context turns and the ordered commit (ADR-004). The chunk itself (same `chunk_id`) is never its own prev.
    - `valence_shift = |val(prev) − val(cur)|` with val: positive 1, appeasement .6, neutral .5, deflecting .4, negative .3, sarcastic .2, aggressive 0.
    - No previous chunk for that speaker ⇒ arousal and valence terms = 0 (only pitch term; max 0.2 → cannot flag on first chunk).
    - `volatility_flag = v ≥ VOLATILITY_THRESHOLD` (default 0.6).

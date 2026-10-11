@@ -20,7 +20,7 @@ No persistence is in scope.
 - Entry per `session_id`: `turns[]` (sorted by `timestamp_ms`, kept ≤ 200 compact records for the summary),
   `baselines: {candidate, counterpart}` (Welford stats), `lastSeenAt`.
 - `snapshot(session_id)` is synchronous and returns an immutable copy: last `CONTEXT_TURNS` (3) turns (each ≤ 40 words) + baselines + previous chunk per speaker.
-- `commit(...)` is synchronous and runs **in the same tick as `reply.send()`, immediately after it, with no `await` in between** (review N7) — no torn writes, and a chunk arriving right after the response already sees it. Insert by `timestamp_ms` (binary insert), so out-of-order arrivals end up ordered.
+- `commit(...)` is synchronous and runs **in the same tick as `reply.send()`, immediately after it, with no `await` in between** (review N7) — no torn writes, and a chunk arriving right after the response already sees it. Insert by `timestamp_ms` (binary insert), so out-of-order arrivals end up ordered. Equal `timestamp_ms` values are kept in arrival order: a stable insert after existing equals (ADR-003 §3, T21).
 - **Summary counters** (review N6): `chunk_count`, `flagged_count`, per-sentiment counts and a bounded top-3 list of high/critical moments are updated incrementally on commit — never derived from the 200-record capped history.
 - **Idempotency:** a per-session Set of committed `chunk_id`s (FIFO-capped at 5000) — duplicates are re-analysed and returned but not re-committed (no double count in baselines/counters).
 - **Empty-text chunks:** committed to counters only; not to context turns or baselines.

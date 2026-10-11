@@ -1,5 +1,5 @@
 # ADR-005: Provider amendment after CP1 real-key checks (amends ADR-001)
-Date: 2026-10-11 · Status: accepted as an amendment to [ADR-001](001-provider-strategy.md) — config defaults and A/B arms only.
+Date: 2026-10-11 · Status: accepted as an amendment to [ADR-001](001-provider-strategy.md) — config defaults and A/B arms only. **CP1 outcome recorded below (§ Outcome): primary = `qwen/qwen3.8-27b`, effort `none`.**
 The frozen API contract (SPEC §2, `packages/contracts`) is **unchanged**. The chain structure from ADR-001 is unchanged too: sequential fallback, no timer hedge, deadline from t0 → heuristic.
 
 ## Context
@@ -17,7 +17,7 @@ The checks show that the ADR-001 primary is **unusable with this key**. They als
 | `openai/gpt-oss-20b` with effort `low`: `finish_reason:length` in 23/50 (46%); quick bench p50 425 / p95 488 ms; 84% heuristic; 40% deadline timeouts | bench `--quick`, n = 50, 7 RPM | p50 is mostly the deadline firing, not model latency. **Fails the 250 ms p50 budget** |
 | Gemini compat accepts `response_format:{type:"json_object"}` for `gemini-3.5-flash-lite`; 42–58 completion tokens; `finish_reason:stop` | 8 real calls | answers the ADR-001 UNVERIFIED row |
 | `gemini-3.5-flash-lite` latency 580–1170 ms per call | 8 real calls | network/region of the human's machine |
-| Gemini 2.5 models **are** visible to this key | real `models` listing | contradicts ADR-001's worry for *this* key. Google docs still say 2.5 is limited to prior users, so a fresh evaluator key may not see it |
+| Gemini 2.5 models **are** listed for this key | real `models` listing | **Corrected by S4a:** `gemini-2.5-flash-lite` is listed but returns 404 on every call (12/12). Listed ≠ callable; this matches Google's prior-users restriction |
 | Groq org limit 8000 TPM (from the 429 body) | real 429 | at ~760 tokens/request ≈ **10 RPM ceiling** for this org |
 | Prompt v1 is ~680 system + ~80 user ≈ 760 prompt tokens (Gemini `prompt_tokens` 758–763) | provider usage fields | above the ~550-token target |
 
@@ -33,6 +33,33 @@ Still UNVERIFIED: evaluator-key model access and limits; qwen latency and qualit
    - **Option B: accept limited coverage.** The fallback mainly covers outright primary errors (fast 429/401/5xx, open circuit), when it gets ~400 ms of remaining budget. A slow primary still ends in the heuristic at the deadline. Bench shows how often the fallback actually wins.
    - Option C (noted, not recommended): a second Groq model as fallback. It shares the same org's 8000 TPM, so it does not help against 429s.
    - Recommendation: **measure A at S4a; if 2.5-flash-lite p50 ≤ ~350 ms, use it as the default fallback, else take B.** Either way the deadline → heuristic rule stays.
+
+## Outcome (CP1, 2026-10-11)
+Source: [`reports/ab-cp1.md`](../../reports/ab-cp1.md) (S3c, eval-engineer; handoff `.agent-work/handoff/eval-engineer-S3c.md`). Fallback measurement: `.agent-work/handoff/backend-dev-S4a.md`.
+
+| | qwen/qwen3.8-27b, effort none | openai/gpt-oss-20b, effort low |
+|---|---|---|
+| Eval macro-F1 (tune, n 89) | **0.75** | 0.33 |
+| Nuance subset strict | 80.6% | 16.1% |
+| Heuristic answers (eval) | 7.9% | 85.4% |
+| Bench quick p50 / p95 (n 50) | **249 / 453 ms**, 0 × 429 (valid) | 400 / 461 ms, 5 × 429 (**invalid for latency**) |
+
+Both arms ran prompt v1.1, without session context, at 8 RPM.
+
+**Decision.** Applying the pre-agreed S3c rule (highest macro-F1 among arms with bench p50 < 250 ms and no 429s), the orchestrator adopted **`qwen/qwen3.8-27b` with `LLM_PRIMARY_REASONING_EFFORT=none` as the default primary**. backend-dev sets the `.env.example` defaults; this ADR changes no config.
+- **`openai/gpt-oss-20b` (effort low)** is kept as a documented alternative only. It is **not viable at `max_tokens` 90**: 85% of eval chunks went to the heuristic (timeouts plus bad_json), and it costs ~30% more tokens per request under the same TPM limit.
+- **Fallback stays `gemini-3.5-flash-lite` (Option B)**, per the S4a measurement on the project key:
+  - `gemini-2.5-flash-lite` is listed by `/models` but returns **404 on every call** (12/12). This corrects the "Gemini 2.5 models ARE visible" row above: visible but not callable, so Option A is not viable.
+  - `gemini-3.5-flash-lite` p50 is 681 ms; `gemini-3.1-flash-lite` p50 is 1020 ms.
+  - So the fallback mainly covers fast primary errors (429/401/5xx/open circuit) and Gemini-only evaluator keys; the deadline → heuristic rule still applies.
+  - Gemini-only deployments under a 450 ms deadline are mostly heuristic. That is a docs item (T14).
+
+**Risks attached to the decision**
+1. **Preview model.** Groq lists `qwen/qwen3.8-27b` as Preview ("may be discontinued at short notice"). This goes in ARCHITECTURE.md limitations, with gpt-oss-20b and `llama-3.1-8b-instant` (where accessible) as documented alternatives.
+2. **No latency margin.** p50 was 249 ms against a 250 ms budget, measured on prompt v1.1 without context. The prompt has since grown to **v1.3 (~776–864 tokens with context turns)**, so the CP1 latency figure no longer describes the shipped prompt. S8a must trim the prompt (T10, target ≤ 550-token system prefix) and re-bench the qwen LLM path (T20) before any latency claim. If p50 ends above 250 after the trim, the human decides between a smaller context window (`CONTEXT_TURNS`) and accepting the miss.
+3. **Throughput.** At ~850 tokens per request the org's 8000 TPM sustains ~8–9 RPM; bursts beyond that go to the heuristic (breaker + instant skip). Trimming the prompt raises this ceiling.
+4. **Evaluator keys may differ.** Model access varies per Groq org and Gemini key. SETUP.md (docs-writer) must explain `LLM_PRIMARY_MODEL` / `LLM_PRIMARY_REASONING_EFFORT` and list the alternatives above. The no-key heuristic mode must stay first-class.
+5. **Evidence limits.** Tune split only (n 89), single labeller, one machine/region; holdout not yet run (S8b). These numbers are a model selection, not a quality claim for docs.
 
 ## Consequences
 - **Throughput is now a top risk.** 8000 TPM at ~760 tokens is about 10 RPM for this org; a harness burst above that goes to the heuristic. Levers:
