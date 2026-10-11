@@ -18,8 +18,9 @@ The checks show that the ADR-001 primary is **unusable with this key**. They als
 | Gemini compat accepts `response_format:{type:"json_object"}` for `gemini-3.5-flash-lite`; 42–58 completion tokens; `finish_reason:stop` | 8 real calls | answers the ADR-001 UNVERIFIED row |
 | `gemini-3.5-flash-lite` latency 580–1170 ms per call | 8 real calls | network/region of the human's machine |
 | Gemini 2.5 models **are** listed for this key | real `models` listing | **Corrected by S4a:** `gemini-2.5-flash-lite` is listed but returns 404 on every call (12/12). Listed ≠ callable; this matches Google's prior-users restriction |
-| Groq org limit 8000 TPM (from the 429 body) | real 429 | at ~760 tokens/request ≈ **10 RPM ceiling** for this org |
-| Prompt v1 is ~680 system + ~80 user ≈ 760 prompt tokens (Gemini `prompt_tokens` 758–763) | provider usage fields | above the ~550-token target |
+| Groq org limit 8000 TPM (from the 429 body) | real 429 | RPM ceiling = 8000 ÷ (Groq tokens/request); Groq-side prompt tokens for the current prompt were **not measured**, see below |
+| Prompt v1 ≈ 760 prompt tokens (Gemini `prompt_tokens` 758–763; split ~680 system / ~80 user is backend-dev's estimate) | provider usage fields (Gemini tokenizer) | above the ~550-token target. Groq's tokenizer may count differently |
+| Prompt v1.3 = 776 tokens without context, 864 with 3 realistic turns (Gemini `prompt_tokens`, one call each) | `.agent-work/handoff/backend-dev-S5.md` | Gemini tokenizer, n = 1 each |
 
 Still UNVERIFIED: evaluator-key model access and limits; qwen latency and quality beyond n = 1; and `qwen/qwen3.8-27b` lifecycle. The Groq models page (read 2026-10-11, ADR-001 evidence) lists qwen3.8-27b under **Preview**: "may be discontinued at short notice".
 
@@ -30,7 +31,7 @@ Still UNVERIFIED: evaluator-key model access and limits; qwen latency and qualit
 4. **Evaluator portability.** The default must be a model the *evaluator's* key is likely to have. SETUP.md (docs-writer) must say that Groq model access differs per org, name the alternatives (`llama-3.1-8b-instant` where accessible; `openai/gpt-oss-20b` with effort low), and explain `LLM_PRIMARY_MODEL` / `LLM_PRIMARY_REASONING_EFFORT`.
 5. **Gemini fallback latency is an S4a design input** (decided by the human and backend-dev in S4a, not here):
    - **Option A: a faster Gemini model.** Candidate `gemini-2.5-flash-lite` (thinking off by default per Google docs, visible to this key). Measure n ≥ 10 calls first. Risk: fresh evaluator keys may lack 2.5 access, and it is a config default, so the 3.5 model stays a documented alternative.
-   - **Option B: accept limited coverage.** The fallback mainly covers outright primary errors (fast 429/401/5xx, open circuit), when it gets ~400 ms of remaining budget. A slow primary still ends in the heuristic at the deadline. Bench shows how often the fallback actually wins.
+   - **Option B: accept limited coverage.** The fallback mainly covers outright primary errors (fast 429/401/5xx, open circuit), when it gets most of the remaining budget (`deadline − elapsed`; not measured). A slow primary still ends in the heuristic at the deadline. Bench shows how often the fallback actually wins.
    - Option C (noted, not recommended): a second Groq model as fallback. It shares the same org's 8000 TPM, so it does not help against 429s.
    - Recommendation: **measure A at S4a; if 2.5-flash-lite p50 ≤ ~350 ms, use it as the default fallback, else take B.** Either way the deadline → heuristic rule stays.
 
@@ -47,7 +48,7 @@ Source: [`reports/ab-cp1.md`](../../reports/ab-cp1.md) (S3c, eval-engineer; hand
 Both arms ran prompt v1.1, without session context, at 8 RPM.
 
 **Decision.** Applying the pre-agreed S3c rule (highest macro-F1 among arms with bench p50 < 250 ms and no 429s), the orchestrator adopted **`qwen/qwen3.8-27b` with `LLM_PRIMARY_REASONING_EFFORT=none` as the default primary**. backend-dev sets the `.env.example` defaults; this ADR changes no config.
-- **`openai/gpt-oss-20b` (effort low)** is kept as a documented alternative only. It is **not viable at `max_tokens` 90**: 85% of eval chunks went to the heuristic (timeouts plus bad_json), and it costs ~30% more tokens per request under the same TPM limit.
+- **`openai/gpt-oss-20b` (effort low)** is kept as a documented alternative only. It is **not viable at `max_tokens` 90**: 85% of eval chunks went to the heuristic (timeouts plus bad_json), and its bench run hit **5 × 429 at the same 8 RPM throttle where qwen hit none**, and the cause is **unexplained**. Candidates: reasoning tokens counting toward TPM, daily/org quota exhausted by earlier runs (the 6 RPM re-run got 48/50 × 429), or higher tokenizer cost. The 429 body was not logged. (An earlier "~30% more tokens per request" claim was retracted. It compared a pre-trim prompt across tokenizers: Groq ~1010–1040 vs Gemini 954–959 on the same old prompt, a ~7–9% gap. Nothing was measured on v1.1.)
 - **Fallback stays `gemini-3.5-flash-lite` (Option B)**, per the S4a measurement on the project key:
   - `gemini-2.5-flash-lite` is listed by `/models` but returns **404 on every call** (12/12). This corrects the "Gemini 2.5 models ARE visible" row above: visible but not callable, so Option A is not viable.
   - `gemini-3.5-flash-lite` p50 is 681 ms; `gemini-3.1-flash-lite` p50 is 1020 ms.
@@ -56,13 +57,13 @@ Both arms ran prompt v1.1, without session context, at 8 RPM.
 
 **Risks attached to the decision**
 1. **Preview model.** Groq lists `qwen/qwen3.8-27b` as Preview ("may be discontinued at short notice"). This goes in ARCHITECTURE.md limitations, with gpt-oss-20b and `llama-3.1-8b-instant` (where accessible) as documented alternatives.
-2. **No latency margin.** p50 was 249 ms against a 250 ms budget, measured on prompt v1.1 without context. The prompt has since grown to **v1.3 (~776–864 tokens with context turns)**, so the CP1 latency figure no longer describes the shipped prompt. S8a must trim the prompt (T10, target ≤ 550-token system prefix) and re-bench the qwen LLM path (T20) before any latency claim. If p50 ends above 250 after the trim, the human decides between a smaller context window (`CONTEXT_TURNS`) and accepting the miss.
-3. **Throughput.** At ~850 tokens per request the org's 8000 TPM sustains ~8–9 RPM; bursts beyond that go to the heuristic (breaker + instant skip). Trimming the prompt raises this ceiling.
+2. **No latency margin.** p50 was 249 ms against a 250 ms budget, measured on prompt v1.1 without context. The prompt has since grown to **v1.3: 776 tokens without context, 864 with 3 turns** (Gemini `prompt_tokens`, backend-dev-S5 handoff), so the CP1 latency figure no longer describes the shipped prompt. S8a must trim the prompt (T10, target ≤ 550-token system prefix) and re-bench the qwen LLM path (T20) before any latency claim. If p50 ends above 250 after the trim, the human decides between a smaller context window (`CONTEXT_TURNS`) and accepting the miss.
+3. **Throughput.** *Assumption* (the S3c throttle's `--tokens-per-req 850`, not a Groq measurement): at ~850 tokens per request the org's 8000 TPM would sustain ~9 RPM; bursts beyond that go to the heuristic (breaker + instant skip). Trimming the prompt raises this ceiling.
 4. **Evaluator keys may differ.** Model access varies per Groq org and Gemini key. SETUP.md (docs-writer) must explain `LLM_PRIMARY_MODEL` / `LLM_PRIMARY_REASONING_EFFORT` and list the alternatives above. The no-key heuristic mode must stay first-class.
 5. **Evidence limits.** Tune split only (n 89), single labeller, one machine/region; holdout not yet run (S8b). These numbers are a model selection, not a quality claim for docs.
 
 ## Consequences
-- **Throughput is now a top risk.** 8000 TPM at ~760 tokens is about 10 RPM for this org; a harness burst above that goes to the heuristic. Levers:
+- **Throughput is now a top risk.** 8000 TPM caps this org at roughly 9–10 RPM *if* Groq counts ~800–850 tokens per request. That is an assumption; S8 bench must log Groq `usage.prompt_tokens` to confirm it (T20). A harness burst above the cap goes to the heuristic. Levers:
   - trimming the prompt toward ≤ 550 tokens (eval-engineer, S8a; must not drop the contrastive few-shots without an eval gain)
   - the breaker skipping instantly on 429
   - S4b heuristic quality
