@@ -1,10 +1,16 @@
 import type { Writable } from 'node:stream';
-import Fastify, { LogController, type FastifyError, type FastifyInstance } from 'fastify';
+import Fastify, {
+  LogController,
+  type FastifyError,
+  type FastifyInstance,
+  type FastifyReply,
+} from 'fastify';
 import type { Config } from './config.js';
 import { registerCors, parseOrigins } from './http/cors.js';
 import { registerRoutes } from './http/routes.js';
 import { WsGateway } from './http/ws-gateway.js';
 import { heuristicClassifier } from './heuristics/rule-classifier.js';
+import { safeError } from './infra/safe-error.js';
 import { readVersion } from './infra/version.js';
 import type { Classifier } from './llm/classifier.js';
 import { SessionStore } from './session/session-store.js';
@@ -27,6 +33,19 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
       : { level: config.LOG_LEVEL },
     logController: new LogController({ disableRequestLogging: true }),
     bodyLimit: 32 * 1024,
+    // S-03: slow-client / idle-socket bounds (no dependency). requestTimeout bounds receiving the whole request.
+    connectionTimeout: 60_000,
+    requestTimeout: 15_000,
+    keepAliveTimeout: 30_000,
+    // Router-level failures (414 id too long, bad URL) never echo the path (S-07).
+    frameworkErrors: (err, _req, reply) => {
+      const status: 400 | 414 = err.code === 'FST_ERR_MAX_PARAM_LENGTH' ? 414 : 400;
+      const body: ValidationError = {
+        error: 'invalid_request',
+        issues: [{ path: '', message: status === 414 ? 'identifier too long' : 'bad request URL' }],
+      };
+      void (reply as FastifyReply).code(status).send(body);
+    },
     // ids may be 512 chars, URL-encoded up to 12 chars each (non-ASCII): the default 100 would 414 valid ids.
     routerOptions: { maxParamLength: LIMITS.ID_MAX * 12 },
   });
@@ -35,11 +54,12 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
     app.log.warn('no LLM API keys configured; serving heuristic results');
   }
 
+  app.setNotFoundHandler((_req, reply) => reply.code(404).send({ error: 'not_found' })); // no path echo
+
   app.setErrorHandler((err: FastifyError, _req, reply) => {
     const status = typeof err.statusCode === 'number' ? err.statusCode : 500;
     // Never log err.message for 4xx: V8 JSON errors can quote body text. Only the code.
-    if (status >= 500)
-      app.log.error({ err: { name: err.name, message: err.message } }, 'unhandled error');
+    if (status >= 500) app.log.error({ err: safeError(err) }, 'unhandled error');
     else app.log.debug({ code: err.code }, 'client error');
     if (status === 413) return reply.code(413).send({ error: 'payload_too_large' });
     if (status === 400 || status === 415) {
@@ -93,7 +113,10 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
     mode,
     broadcast: (m) => gateway.broadcast(m),
     onError: (e, ctx) =>
-      app.log.error({ ...ctx, err: e }, 'classifier exception swallowed; heuristic used'),
+      app.log.error(
+        { ...ctx, err: safeError(e) },
+        'classifier exception swallowed; heuristic used',
+      ),
     version: readVersion(),
   });
   return app;

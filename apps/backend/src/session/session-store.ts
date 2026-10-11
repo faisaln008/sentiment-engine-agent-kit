@@ -2,6 +2,7 @@ import type { Sentiment, Speaker } from '@app/contracts';
 import { LIMITS } from '@app/contracts';
 import type { ContextTurn } from '../llm/classifier.js';
 import { emptyBaseline, observe } from '../domain/acoustic-baseline.js';
+import { idKey } from '../infra/id-key.js';
 import { clipTurn } from '../domain/clip.js';
 import { truncate } from '../domain/truncate.js';
 import {
@@ -97,8 +98,9 @@ export class SessionStore {
    */
   commit(sessionId: string, r: CommitRecord): boolean {
     const s = this.getOrCreate(sessionId);
-    if (s.ids.has(r.chunk_id)) return false;
-    s.ids.add(r.chunk_id);
+    const key = idKey(r.chunk_id); // digest, never the raw (<= 512 char) id
+    if (s.ids.has(key)) return false;
+    s.ids.add(key);
     if (s.ids.size > MAX_IDS) {
       const oldest = s.ids.values().next().value;
       if (oldest !== undefined) s.ids.delete(oldest);

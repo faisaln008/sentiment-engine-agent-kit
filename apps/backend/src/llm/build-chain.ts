@@ -1,4 +1,5 @@
 import type { Config } from '../config.js';
+import type { ClassifyInput } from './classifier.js';
 import type { FetchFn } from '../infra/http-agent.js';
 import { FallbackChain, type Failure } from './fallback-chain.js';
 import { OpenAiCompatClassifier, type AdapterLog } from './openai-adapter.js';
@@ -17,7 +18,7 @@ export interface BuiltChain {
 export interface ChainHooks {
   onDisabled: (provider: string, status: number) => void;
   onBreakerOpen?: (provider: string, info: { retryAfterMs: number; cooldownMs: number }) => void;
-  onAttemptFailed?: (f: Failure) => void;
+  onAttemptFailed?: (f: Failure, input: ClassifyInput) => void;
 }
 
 export function buildChain(

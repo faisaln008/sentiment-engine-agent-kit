@@ -8,6 +8,8 @@ const str = (def: string) => z.string().default(def);
 const EFFORTS = ['none', 'minimal', 'low', 'medium', 'high'] as const;
 
 const ConfigSchema = z.object({
+  /** Listen address. Loopback by default: 0.0.0.0 is an explicit opt-in (exposes every session to the LAN). */
+  HOST: str('127.0.0.1'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   LOG_LEVEL: z
     .enum(LOG_LEVELS, { error: `must be one of ${LOG_LEVELS.join('|')}` })

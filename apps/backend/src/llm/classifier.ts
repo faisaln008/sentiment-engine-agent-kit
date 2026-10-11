@@ -22,6 +22,8 @@ export interface ContextTurn {
 }
 
 export interface ClassifyInput {
+  /** Ids for log lines only (never sent to a provider). */
+  meta?: { chunk_id: string; session_id: string };
   text: string;
   speaker: Speaker;
   acoustics: AcousticMetadata;

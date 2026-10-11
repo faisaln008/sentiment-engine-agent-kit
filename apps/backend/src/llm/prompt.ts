@@ -66,7 +66,7 @@ export function buildUserBlock(i: ClassifyInput): string {
 function defang(t: string): string {
   return t
     .normalize('NFKC')
-    .replace(/\p{Cf}/gu, '')
+    .replace(/[\p{Cf}\p{Cc}]/gu, (c) => (/\s/.test(c) ? ' ' : '')) // invisible/control chars (NUL...) out, \t\n\r to space
     .replace(/<<<|>>>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

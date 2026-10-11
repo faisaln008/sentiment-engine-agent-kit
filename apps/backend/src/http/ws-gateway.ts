@@ -101,6 +101,11 @@ export class WsGateway {
     this.wss.close();
   }
 
+  /** A pong arrived: the client is alive for the next heartbeat. */
+  onPong(ws: WsLike): void {
+    if (this.clients.has(ws)) this.alive.set(ws, true);
+  }
+
   /** One heartbeat tick: ping everyone, terminate clients that never answered the previous ping. */
   private beat(): void {
     for (const ws of [...this.clients]) {
@@ -152,7 +157,7 @@ export class WsGateway {
     }
     this.wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
       ws.on('message', () => undefined); // server -> client only: inbound frames are ignored
-      ws.on('pong', () => this.alive.set(ws, true));
+      ws.on('pong', () => this.onPong(ws));
       ws.on('error', () => this.drop(ws));
       ws.on('close', () => {
         this.clients.delete(ws);

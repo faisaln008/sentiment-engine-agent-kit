@@ -287,6 +287,22 @@ describe('adapter extras (S7a fix loop)', () => {
   });
 });
 
+describe('adapter T22', () => {
+  it('a 400 naming reasoning_effort does not trigger the retry when no effort was sent', async () => {
+    const bad = new Response(
+      JSON.stringify({ error: { message: 'reasoning_effort bad', code: 'invalid_request_error' } }),
+      { status: 400 },
+    );
+    const { fetchFn, calls } = fake([bad, ok()]);
+    expect(await make(fetchFn).classify(input, sig())).toMatchObject({
+      ok: false,
+      reason: 'http',
+      status: 400,
+    });
+    expect(calls).toHaveLength(1);
+  });
+});
+
 describe('prompt', () => {
   it('prompt.version and static prefix first; transcript delimited and defanged', () => {
     expect(PROMPT_VERSION).toBe('v1.3');

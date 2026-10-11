@@ -117,6 +117,7 @@ async function analyzeInner(
     speaker: req.speaker,
     acoustics: values,
     imputed,
+    meta: { chunk_id: req.chunk_id, session_id: req.session_id },
     context: snap.turns,
     acousticNote: describeAcoustics(values, imputed, base),
     arousalZ: arousal,

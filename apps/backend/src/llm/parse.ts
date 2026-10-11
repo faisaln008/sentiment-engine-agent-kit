@@ -92,7 +92,7 @@ function lowerEnum<T extends string>(
   const k = raw.trim().toLowerCase();
   const direct = schema.safeParse(k);
   if (direct.success && direct.data !== undefined) return direct.data;
-  return syn[k] ?? null;
+  return Object.hasOwn(syn, k) ? (syn[k] ?? null) : null; // own keys only: `__proto__`/`constructor` => null
 }
 
 const text = (v: unknown): string => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim() : '');

@@ -11,7 +11,7 @@ export interface ChainOptions {
   /** Per-provider concurrent call cap; at the cap a provider is skipped like an open breaker. */
   maxInflight: number;
   /** Called for every FAILED provider attempt (also when a later provider answers). No text, no keys. */
-  onAttemptFailed?: (f: Failure) => void;
+  onAttemptFailed?: (f: Failure, input: ClassifyInput) => void;
   onDisabled?: (provider: string, status: number) => void;
   onBreakerOpen?: (provider: string, info: { retryAfterMs: number; cooldownMs: number }) => void;
   now?: () => number;
@@ -69,7 +69,7 @@ export class FallbackChain implements Classifier {
       }
       const r = await this.call(s, input, signal);
       if (r.ok) return r;
-      this.notify(r);
+      this.notify(r, input);
       real ??= r;
       if (r.reason === 'timeout') return r;
     }
@@ -101,9 +101,9 @@ export class FallbackChain implements Classifier {
     }
   }
 
-  private notify(f: Failure): void {
+  private notify(f: Failure, input: ClassifyInput): void {
     try {
-      this.o.onAttemptFailed?.(f);
+      this.o.onAttemptFailed?.(f, input);
     } catch {
       // a logging hook must never break classification
     }

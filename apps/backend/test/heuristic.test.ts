@@ -186,4 +186,14 @@ describe('T15 deadline without a consequence', () => {
       'critical',
     );
   });
+
+  it('T22: "or you/i" needs a threat verb to be a consequence', () => {
+    const hot = { pitch_volatility: 1, volume_intensity: 1, speech_rate_wpm: 240 };
+    expect(
+      classifyRules(
+        input('Please confirm by Monday or you can send it to Alex.', 'counterpart', hot),
+      ).risk,
+    ).not.toBe('critical');
+    expect(classifyRules(input('Decide by Friday or I walk.')).risk).toBe('critical');
+  });
 });

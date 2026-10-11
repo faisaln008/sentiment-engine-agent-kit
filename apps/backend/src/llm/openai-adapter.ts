@@ -92,7 +92,7 @@ export class OpenAiCompatClassifier implements Classifier {
           this.jsonMode = false;
           this.logJsonModeOnce();
           raw = await this.post(messages, false, signal);
-        } else if (this.reasoning && e.namesReasoning) {
+        } else if (this.reasoning && this.sendsReasoning() && e.namesReasoning) {
           // Model rejects reasoning_effort/include_reasoning (e.g. a llama model with the default effort):
           // capability state, like jsonMode. Retry once without and stay off.
           this.reasoning = false;
@@ -158,6 +158,12 @@ export class OpenAiCompatClassifier implements Classifier {
       { provider: this.name },
       'adapter.json-mode-unsupported: retrying without response_format',
     );
+  }
+
+  /** True when a non-empty reasoning effort is configured, i.e. the fields were actually sent. */
+  private sendsReasoning(): boolean {
+    const r = this.o.reasoningEffort;
+    return r !== undefined && r !== '';
   }
 
   private body(messages: unknown, jsonMode: boolean): string {

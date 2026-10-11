@@ -52,7 +52,7 @@ if (await backendUp()) {
     finish(1);
   }
   const { p50, p95, errors = 0, valid_for_latency: valid } = JSON.parse(m[1]);
-  const ok = p50 <= P50_BUDGET && p95 <= P95_BUDGET && !(errors > 0) && valid !== false;
+  const ok = p50 < P50_BUDGET && p95 < P95_BUDGET && !(errors > 0) && valid !== false;
   results.push({ name: `latency p50=${p50} p95=${p95} errors=${errors} valid=${valid}`, ok, s: '-' });
   if (!ok) finish(1);
 } else {
