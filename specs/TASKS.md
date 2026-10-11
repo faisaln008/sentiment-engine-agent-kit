@@ -116,9 +116,9 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - [x] `npm run dev:frontend` works against `npm run reference`
 
 ## S6b — Four mandatory widgets · frontend-dev · 50 min · deps: S6a
-- [ ] Traffic light (colour + icon + text; critical pulse respects reduced motion), Sentiment stream, Volatility alert (role=alert, 8 s decay), Mitigation panel (aria-live, copy)
-- [ ] All four visible at 1280×800 without scroll; contrast ≥ 4.5:1; LLM strings rendered as text only
-- [ ] Build passes; screenshot attached to handoff
+- [x] Traffic light (colour + icon + text; critical pulse respects reduced motion), Sentiment stream, Volatility alert (role=alert, 8 s decay), Mitigation panel (aria-live, copy)
+- [x] All four visible at 1280×800 without scroll; contrast ≥ 4.5:1; LLM strings rendered as text only
+- [x] Build passes; screenshot attached to handoff
 
 ## S6c — WS hook + header + basic demo button · frontend-dev · 40 min · deps: S6b, S7a (mock until then)
 - [ ] WS `/ws/telemetry` with backoff 0.5→8 s + jitter; frames validated with `ServerMessageSchema`; merges with POST store

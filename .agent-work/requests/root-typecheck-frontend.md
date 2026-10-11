@@ -9,3 +9,6 @@ Replace the root `package.json` `typecheck` script with:
 Also: `npm install` was run at root and updated `package-lock.json` (react, react-dom, @vitejs/plugin-react, @types/react*). Commit it.
 
 ESLint: no change needed. Root config already lints .tsx via tseslint recommended. No react-hooks plugin is installed; optional later.
+
+## Update (S6b)
+frontend now has two tsconfigs (src = browser types; tsconfig.node.json = vite.config + tests). `tsc --noEmit -p apps/frontend` only checks src. Prefer in the root script: `npm run -w apps/frontend typecheck` (runs both) instead of `tsc --noEmit -p apps/frontend`.

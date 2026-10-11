@@ -1,0 +1,264 @@
+:root {
+  color-scheme: dark;
+  --bg: #0e1318;
+  --panel: #17202a;
+  --text: #eef2f6;
+  --dim: #a3b2c0;
+  --line: #2a3745;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.header h1 {
+  font-size: 16px;
+  margin: 0;
+  flex: 1;
+}
+.main {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 20px;
+  min-height: 0;
+}
+.top {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 12px;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 18px;
+  min-height: 0;
+}
+.panel-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.dim {
+  color: var(--dim);
+}
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+:focus-visible {
+  outline: 3px solid #8ab4ff;
+  outline-offset: 2px;
+}
+
+.light {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-weight: 800;
+  font-size: 32px;
+  border: 3px solid transparent;
+}
+.light-icon {
+  font-size: 36px;
+}
+.light-sentiment {
+  margin: 10px 0 0;
+  color: var(--dim);
+}
+.risk-none {
+  background: #26313d;
+  color: var(--text);
+}
+.risk-low {
+  background: #0f3d1f;
+  color: #8ff0ae;
+  border-color: #2e8b4f;
+}
+.risk-medium {
+  background: #4a3a05;
+  color: #ffdf7a;
+  border-color: #b8901a;
+}
+.risk-high {
+  background: #5a1414;
+  color: #ffb0b0;
+  border-color: #c24a4a;
+}
+.risk-critical {
+  background: #7a0c0c;
+  color: #ffffff;
+  border-color: #ffb0b0;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 120, 120, 0.45);
+  }
+}
+
+.mitigation-now {
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 650;
+  margin: 4px 0 10px;
+  min-height: 70px;
+}
+.mitigation-prev {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: var(--dim);
+  opacity: 0.85;
+  font-size: 14px;
+}
+.btn {
+  background: #2b3b4c;
+  color: var(--text);
+  border: 1px solid #4a5d70;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.alert-slot {
+  min-height: 48px;
+}
+.alert-banner {
+  background: #b42318;
+  color: #fff;
+  font-weight: 800;
+  font-size: 20px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 2px solid #ffd0cc;
+}
+.alert-idle {
+  color: var(--dim);
+  font-size: 13px;
+  padding: 14px 4px;
+}
+
+.stream {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.stream-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+.row {
+  display: grid;
+  grid-template-columns: 70px 44px 110px 90px 1fr 70px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.speaker {
+  font-weight: 700;
+}
+.intent {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid;
+  text-align: center;
+}
+.sent-positive {
+  background: #0f3d1f;
+  color: #9af5b6;
+  border-color: #2e8b4f;
+}
+.sent-negative {
+  background: #4a1a1a;
+  color: #ffb4b4;
+  border-color: #b04a4a;
+}
+.sent-neutral {
+  background: #2a3440;
+  color: #d5dde5;
+  border-color: #55687a;
+}
+.sent-sarcastic {
+  background: #3d2a52;
+  color: #e3c6ff;
+  border-color: #8a5db8;
+}
+.sent-aggressive {
+  background: #5a1a0a;
+  color: #ffc4a8;
+  border-color: #d0622f;
+}
+.sent-deflecting {
+  background: #153a4a;
+  color: #a8e4ff;
+  border-color: #3a8fb0;
+}
+.sent-appeasement {
+  background: #4a3f12;
+  color: #ffe9a0;
+  border-color: #a8913a;
+}
+.conf {
+  display: block;
+  height: 8px;
+  background: #2a3440;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.conf-fill {
+  display: block;
+  height: 100%;
+  background: #8ab4ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .risk-critical {
+    animation: none;
+  }
+}
