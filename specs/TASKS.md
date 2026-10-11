@@ -54,14 +54,14 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - [x] Split `tune.jsonl` / `holdout.jsonl` by session (75/25); smoke subset of 15 tagged
 
 ## S2b — run-eval.ts · eval-engineer · 25 min · deps: S2a, S1b
-- [ ] Replaces the S0 stub script; `npm run eval -- --target <url> --label <name> [--split] [--smoke]`; payloads typed by `TelemetryRequestWireSchema`; sessions parallel (≤ RPM), chunks sequential in timestamp order
-- [ ] `reports/eval-latest.md`: strict/lenient acc, macro-F1, per-class P/R/F1, 7×7 confusion, nuance subset, volatility P/R/F1, risk MAE, provider mix, failure table, baseline column
-- [ ] Baseline run against reference on :3001 committed; `eval:smoke` exits non-zero below threshold (threshold value in handoff)
+- [x] Replaces the S0 stub script; `npm run eval -- --target <url> --label <name> [--split] [--smoke]`; payloads typed by `TelemetryRequestWireSchema`; sessions parallel (≤ RPM), chunks sequential in timestamp order
+- [x] `reports/eval-latest.md`: strict/lenient acc, macro-F1, per-class P/R/F1, 7×7 confusion, nuance subset, volatility P/R/F1, risk MAE, provider mix, failure table, baseline column
+- [x] Baseline run against reference on :3001 committed; `eval:smoke` exits non-zero below threshold (threshold value in handoff)
 
 ## S2c — bench.ts + simulate · eval-engineer · 25 min · deps: S1b
-- [ ] Scenarios: 200 sequential / 20 sessions × 10 concurrent / cold-boot first 5; client `performance.now()` + server `processing_latency_ms`
-- [ ] Reports p50/p95/p99/max, provider mix, fallback %, heuristic %, **deadline-timeout %**, 429 count, `finish_reason:length` count, RPM used; writes `<!-- metrics {"p50":..,"p95":..} -->`; `--quick` mode for gate
-- [ ] `npm run simulate` streams a scripted negotiation at 1–3 s cadence to :3000
+- [x] Scenarios: 200 sequential / 20 sessions × 10 concurrent / cold-boot first 5; client `performance.now()` + server `processing_latency_ms`
+- [x] Reports p50/p95/p99/max, provider mix, fallback %, heuristic %, **deadline-timeout %**, 429 count, `finish_reason:length` count, RPM used; writes `<!-- metrics {"p50":..,"p95":..} -->`; `--quick` mode for gate
+- [x] `npm run simulate` streams a scripted negotiation at 1–3 s cadence to :3000
 
 ## S3a — OpenAI-compatible adapter + parse · backend-dev · 30 min · deps: S1b · review: paired with S3b
 - [ ] One adapter class (`fetch` + undici keep-alive Agent); body per ADR-001; 429→`rate_limited` (+retry-after), 5xx/network→`http`, abort→`timeout`; never throws

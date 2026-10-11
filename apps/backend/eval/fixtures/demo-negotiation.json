@@ -1,0 +1,137 @@
+{
+  "description": "Invented demo negotiation for npm run simulate (not from the brief, not from the eval dataset). delay_ms in [1000,3000].",
+  "turns": [
+    {
+      "delay_ms": 1000,
+      "speaker": "candidate",
+      "text": "Thanks for joining. The proposal covers 80 analyst seats with onboarding included, starting next month.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.3,
+        "speech_rate_wpm": 145,
+        "pause_duration_ms": 350,
+        "volume_intensity": 0.5
+      }
+    },
+    {
+      "delay_ms": 2200,
+      "speaker": "counterpart",
+      "text": "Appreciate it. The platform looks solid, but the price is well above what finance approved for this year.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.35,
+        "speech_rate_wpm": 150,
+        "pause_duration_ms": 400,
+        "volume_intensity": 0.5
+      }
+    },
+    {
+      "delay_ms": 1800,
+      "speaker": "candidate",
+      "text": "Understood. Which part of the budget gap matters most to you, the licence fee or the onboarding cost?",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.3,
+        "speech_rate_wpm": 140,
+        "pause_duration_ms": 300,
+        "volume_intensity": 0.48
+      }
+    },
+    {
+      "delay_ms": 2600,
+      "speaker": "counterpart",
+      "text": "Mostly the licence fee. We have a quote from another vendor that comes in about twenty percent lower.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.4,
+        "speech_rate_wpm": 155,
+        "pause_duration_ms": 600,
+        "volume_intensity": 0.52
+      }
+    },
+    {
+      "delay_ms": 1500,
+      "speaker": "candidate",
+      "text": "Oh, okay. Sorry, we can definitely drop the price by twenty percent, whatever works for you.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.45,
+        "speech_rate_wpm": 175,
+        "pause_duration_ms": 200,
+        "volume_intensity": 0.4
+      }
+    },
+    {
+      "delay_ms": 2900,
+      "speaker": "counterpart",
+      "text": "Great. And we will need the security review done by legal before we can say anything about a start date.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.3,
+        "speech_rate_wpm": 140,
+        "pause_duration_ms": 1300,
+        "volume_intensity": 0.45
+      }
+    },
+    {
+      "delay_ms": 2000,
+      "speaker": "candidate",
+      "text": "Can we put a date on the legal review? Our onboarding team needs two weeks of notice.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.35,
+        "speech_rate_wpm": 150,
+        "pause_duration_ms": 350,
+        "volume_intensity": 0.52
+      }
+    },
+    {
+      "delay_ms": 2400,
+      "speaker": "counterpart",
+      "text": "It is hard to say. Legal has a long queue, so let us just see how things go over the next few weeks.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.3,
+        "speech_rate_wpm": 135,
+        "pause_duration_ms": 1500,
+        "volume_intensity": 0.42
+      }
+    },
+    {
+      "delay_ms": 1700,
+      "speaker": "candidate",
+      "text": "If the review slips past the end of the month, the discount we discussed will not be available anymore.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.4,
+        "speech_rate_wpm": 150,
+        "pause_duration_ms": 300,
+        "volume_intensity": 0.55
+      }
+    },
+    {
+      "delay_ms": 1200,
+      "speaker": "counterpart",
+      "text": "Then we are done here. Either the discount holds without conditions or we sign with the other vendor today.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.85,
+        "speech_rate_wpm": 195,
+        "pause_duration_ms": 150,
+        "volume_intensity": 0.82
+      }
+    },
+    {
+      "delay_ms": 2800,
+      "speaker": "candidate",
+      "text": "I hear you. Let us keep the discount and agree a named legal contact plus a review date this week.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.35,
+        "speech_rate_wpm": 145,
+        "pause_duration_ms": 450,
+        "volume_intensity": 0.5
+      }
+    },
+    {
+      "delay_ms": 2300,
+      "speaker": "counterpart",
+      "text": "Fair enough. Maria from our legal team will confirm the review date with you by Thursday.",
+      "acoustic_metadata": {
+        "pitch_volatility": 0.3,
+        "speech_rate_wpm": 140,
+        "pause_duration_ms": 400,
+        "volume_intensity": 0.5
+      }
+    }
+  ]
+}

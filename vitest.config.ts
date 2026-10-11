@@ -9,5 +9,12 @@ export default defineConfig({
       ),
     },
   },
-  test: { include: ['apps/backend/test/**/*.test.ts', 'apps/frontend/test/**/*.test.ts', 'packages/*/test/**/*.test.ts'] },
+  test: {
+    include: [
+      'apps/backend/test/**/*.test.ts',
+      'apps/frontend/test/**/*.test.ts',
+      'apps/backend/eval/test/**/*.test.ts',
+      'packages/*/test/**/*.test.ts',
+    ],
+  },
 });

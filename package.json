@@ -14,14 +14,14 @@
     "start": "npm run build && npm run -w apps/backend start",
     "dev": "npm run -w packages/contracts build && npm run -w apps/backend dev",
     "dev:frontend": "npm run -w apps/frontend dev",
-    "typecheck": "tsc -b packages/contracts apps/backend && tsc -p apps/backend/tsconfig.check.json",
+    "typecheck": "tsc -b packages/contracts apps/backend && tsc -p apps/backend/tsconfig.check.json && npm run -w apps/frontend typecheck",
     "lint": "eslint . --max-warnings=0 && prettier --check .",
     "test": "vitest run",
-    "eval": "npm run -w apps/backend eval",
+    "eval": "npm run -w apps/backend eval --",
     "eval:smoke": "npm run -w apps/backend eval -- --smoke",
-    "bench": "npm run -w apps/backend bench",
+    "bench": "npm run -w apps/backend bench --",
     "reference": "cd docs/assignment/reference-backend && npm install --silent --no-audit --no-fund && PORT=3001 node index.js",
-    "simulate": "npm run -w apps/backend simulate",
+    "simulate": "npm run -w apps/backend simulate --",
     "gate": "node scripts/gate.mjs"
   },
   "devDependencies": {

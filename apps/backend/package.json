@@ -7,9 +7,9 @@
     "build": "tsc -b",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "eval": "node -e \"console.log('not implemented (S2)')\" --",
-    "bench": "node -e \"console.log('not implemented (S2)')\" --",
-    "simulate": "node -e \"console.log('not implemented (S2)')\" --"
+    "eval": "tsc -b ../../packages/contracts && tsx eval/run-eval.ts",
+    "bench": "tsc -b ../../packages/contracts && tsx eval/bench.ts",
+    "simulate": "tsc -b ../../packages/contracts && tsx eval/simulate.ts"
   },
   "dependencies": {
     "@app/contracts": "*",

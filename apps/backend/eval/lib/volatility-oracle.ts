@@ -5,6 +5,7 @@
  */
 import type { Sentiment } from '@app/contracts';
 import type { LabelledChunk } from './dataset.js';
+import { volatilityThreshold } from './env-defaults.js';
 
 type Field = 'pitch_volatility' | 'speech_rate_wpm' | 'volume_intensity';
 const AROUSAL_FIELDS: readonly Field[] = [
@@ -26,7 +27,10 @@ export const VALENCE: Record<Sentiment, number> = {
   sarcastic: 0.2,
   aggressive: 0,
 };
-export const VOLATILITY_THRESHOLD = 0.6;
+const THRESHOLD = volatilityThreshold();
+/** Same env var as the backend (VOLATILITY_THRESHOLD, fallback 0.6); reports print the value and its source. */
+export const VOLATILITY_THRESHOLD = THRESHOLD.value;
+export const VOLATILITY_THRESHOLD_SOURCE = THRESHOLD.source;
 
 interface Welford {
   n: number;
@@ -70,8 +74,14 @@ export interface VolatilityTrace {
   flag: boolean;
 }
 
-/** Replays one session (timestamp order) and returns v per chunk, using the expected labels as "previous". */
-export function traceSession(chunks: readonly LabelledChunk[]): VolatilityTrace[] {
+/**
+ * Replays one session (timestamp order) and returns v per chunk. `sentimentOf` picks the label used for the
+ * valence terms: the expected label (validator, formula ceiling) or the label the API returned (fusion fidelity).
+ */
+export function traceSession(
+  chunks: readonly LabelledChunk[],
+  sentimentOf: (c: LabelledChunk) => Sentiment = (c) => c.expected_sentiment,
+): VolatilityTrace[] {
   const speakers = new Map<string, SpeakerState>();
   return chunks.map((c) => {
     const st = speakers.get(c.speaker) ?? freshState();
@@ -79,10 +89,11 @@ export function traceSession(chunks: readonly LabelledChunk[]): VolatilityTrace[
     const zs = AROUSAL_FIELDS.map((f) => zScore(st.stats[f], f, c.acoustic_metadata[f]));
     const arousal = zs.reduce((a, b) => a + b, 0) / zs.length;
     const dz = st.prev ? Math.min(1, Math.abs(arousal - st.prev.arousal) / 2) : 0;
-    const dv = st.prev ? Math.abs(VALENCE[st.prev.sentiment] - VALENCE[c.expected_sentiment]) : 0;
+    const sentiment = sentimentOf(c);
+    const dv = st.prev ? Math.abs(VALENCE[st.prev.sentiment] - VALENCE[sentiment]) : 0;
     const v = clamp(0.4 * dz + 0.4 * dv + 0.2 * c.acoustic_metadata.pitch_volatility, 0, 1);
     for (const f of AROUSAL_FIELDS) observe(st.stats[f], c.acoustic_metadata[f]);
-    st.prev = { arousal, sentiment: c.expected_sentiment };
+    st.prev = { arousal, sentiment };
     return { chunk_id: c.chunk_id, arousal_z: arousal, v, flag: v >= VOLATILITY_THRESHOLD };
   });
 }
