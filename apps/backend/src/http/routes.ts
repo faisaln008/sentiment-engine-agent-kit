@@ -64,6 +64,8 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
           provider: out.provider,
           latency_ms: out.response.processing_latency_ms,
           outcome: out.outcome,
+          ...(out.reason === undefined ? {} : { reason: out.reason }),
+          ...(out.finish_reason === undefined ? {} : { finish_reason: out.finish_reason }),
         },
         'chunk',
       );

@@ -64,26 +64,28 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - [x] `npm run simulate` streams a scripted negotiation at 1–3 s cadence to :3000
 
 ## S3a — OpenAI-compatible adapter + parse · backend-dev · 30 min · deps: S1b · review: paired with S3b
-- [ ] One adapter class (`fetch` + undici keep-alive Agent); body per ADR-001; 429→`rate_limited` (+retry-after), 5xx/network→`http`, abort→`timeout`; never throws
-- [ ] Optional `LLM_PRIMARY_REASONING_EFFORT` / `LLM_FALLBACK_REASONING_EFFORT` (empty ⇒ field omitted; when set, also `include_reasoning:false` for Groq) so the CP1 A/B can run gpt-oss-20b fairly; add the names to `.env.example` (empty values)
-- [ ] `response_format` rejected ⇒ retry once without, logged once (`adapter.json-mode-unsupported`); `adapter.network-error-is-http`
-- [ ] `parse.ts`: fences, first `{…}`, zod, enum casing/synonyms, clamp c, default r; empty `choices`/null content/`finish_reason:length` ⇒ `bad_json`; tests `parse.*`
-- [ ] Non-blocking warm-up per provider on boot
-- [ ] No real API calls in `npm test` (fake fetch)
+- [x] One adapter class (`fetch` + undici keep-alive Agent); body per ADR-001; 429→`rate_limited` (+retry-after), 5xx/network→`http`, abort→`timeout`; never throws
+- [x] Optional `LLM_PRIMARY_REASONING_EFFORT` / `LLM_FALLBACK_REASONING_EFFORT` (empty ⇒ field omitted; when set, also `include_reasoning:false` for Groq) so the CP1 A/B can run gpt-oss-20b fairly; add the names to `.env.example` (empty values)
+- [x] `response_format` rejected ⇒ retry once without, logged once (`adapter.json-mode-unsupported`); `adapter.network-error-is-http`
+- [x] `parse.ts`: fences, first `{…}`, zod, enum casing/synonyms, clamp c, default r; empty `choices`/null content/`finish_reason:length` ⇒ `bad_json`; tests `parse.*`
+- [x] Non-blocking warm-up per provider on boot
+- [x] No real API calls in `npm test` (fake fetch)
 
 ## S3b — Prompt v1 + pipeline wiring + deadline · backend-dev · 25 min · deps: S3a · review: paired with S3a
-- [ ] `llm/prompt.ts`: static system prefix (condensed taxonomy + schema + 4–6 contrastive few-shots, ≤ ~550 tokens) then dynamic user block (SPEC §6 format, `<<< >>>`); exports `PROMPT_VERSION`; token count logged in handoff
-- [ ] `services/analyze-chunk.ts` uses primary classifier with deadline AbortController **counted from t0** → heuristic on failure
-- [ ] Manual Groq smoke with a real key (human-run) recorded; bench p50 recorded in handoff → **CP1 input**
-- [ ] Gemini `json_object` acceptance + output fits 90 tokens verified with a real key → request to spec-architect to update ADR-001 UNVERIFIED rows
+- [x] `llm/prompt.ts`: static system prefix (condensed taxonomy + schema + 4–6 contrastive few-shots, ≤ ~550 tokens) then dynamic user block (SPEC §6 format, `<<< >>>`); exports `PROMPT_VERSION`; token count logged in handoff
+- [x] `services/analyze-chunk.ts` uses primary classifier with deadline AbortController **counted from t0** → heuristic on failure
+- [x] Manual Groq smoke with a real key (human-run) recorded; bench p50 recorded in handoff → **CP1 input**
+- [x] Gemini `json_object` acceptance + output fits 90 tokens verified with a real key → request to spec-architect to update ADR-001 UNVERIFIED rows
 
-## S3c — CP1 model A/B (mandatory) · eval-engineer · 25 min · deps: S3b, S2b, S2c · at CP1 (~2:50–3:20)
-- [ ] Run tune split + `bench --quick` twice against our backend with env overrides only (no `.env` edits): (A) `LLM_PRIMARY_MODEL=llama-3.1-8b-instant`; (B) `LLM_PRIMARY_MODEL=openai/gpt-oss-20b`, `LLM_PRIMARY_REASONING_EFFORT=low`
-- [ ] Same `LLM_MAX_TOKENS`, same prompt version, same throttle (RPM noted); run regardless of nuance scores
+## S3c — CP1 model A/B (mandatory): qwen3.8-27b vs gpt-oss-20b · eval-engineer · 25 min · deps: S3b, S2b, S2c · at CP1 (~2:50–3:20)
+Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessible to the project key; Q2 "regardless of scores" is preserved.
+- [ ] Run the tune split + `bench --quick` twice against our backend with env overrides only (no `.env` edits): (A) `LLM_PRIMARY_MODEL=qwen/qwen3.8-27b`, `LLM_PRIMARY_REASONING_EFFORT=none`; (B) `LLM_PRIMARY_MODEL=openai/gpt-oss-20b`, `LLM_PRIMARY_REASONING_EFFORT=low`
+- [ ] Same `LLM_MAX_TOKENS`, same prompt version, same throttle kept under the org's 8000 TPM (≈ 10 RPM at ~760 tokens; RPM noted); run regardless of nuance scores
 - [ ] `reports/ab-cp1.md`: macro-F1, nuance-subset accuracy, per-class F1, p50/p95, heuristic %, deadline-timeout %, `finish_reason:length` count, for both
-- [ ] Recommendation to the human (winner by macro-F1 subject to p50 < 250); human sets `LLM_PRIMARY_MODEL`; request to spec-architect to amend ADR-001 with the report link
+- [ ] Recommendation to the human (winner by macro-F1 subject to p50 < 250); backend-dev then changes the `.env.example` defaults; request to spec-architect to amend ADR-005 with the report link
 
 ## S4a — Sequential fallback chain + breaker + caps · backend-dev · 25 min · deps: S3b · review: single
+- [ ] Design input from [ADR-005](adr/005-provider-amendment-cp1.md) §5: measure `gemini-2.5-flash-lite` (n ≥ 10). If p50 ≤ ~350 ms, propose it as the fallback default (human approves), else the fallback mainly covers fast primary errors. Record the result in the handoff
 - [ ] `fallback-chain.ts` as a `Classifier` of `Classifier`s: try providers in order; move to the next **only** on `http`/`bad_json`/`rate_limited`/`circuit_open`/`no_key`/in-flight cap; **no timer hedge, no parallel calls**; next provider gets `deadline − elapsed`
 - [ ] Deadline counted from t0: on expiry abort in-flight call → heuristic immediately (timeout counts toward the breaker)
 - [ ] Per-provider breaker (`LLM_CIRCUIT_FAILURES`, `LLM_CIRCUIT_COOLDOWN_MS`, ≥ retry-after); 401/403 disables provider + recomputes `/health.mode`
@@ -158,3 +160,6 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - [done 2026-10-11] T7 (backend-dev, before S2b approval; S2a-r1 N12) Gate typecheck must cover `apps/backend/eval/**/*.ts` and `apps/backend/test/**/*.ts` (e.g. `tsconfig.eval.json` noEmit, same strict flags, references contracts) chained into root `typecheck`.
 - T8 (eval-engineer, S2b; S2a-r1 N3–N11, r2 N1) Dataset polish + reporting: clean 4th counterfactual pair (cf-number confounded); s06_c08 tie-break; s09_c04 context; s07_c08 missing payment-terms turn; sincere "Sure, that works" + non-deferral "stakeholders"; s10_c06 risk consistency; SCHEMA rule wording (per-speaker, delivery-spike anchor). S2b reports must print the constant-neutral lenient floor (45.3% overall, 6/15 smoke); smoke threshold on lenient accuracy well above floor; smoke numbers never cited as quality. Label edits only with rationale + changelog.
 - T9 (S5a/S5b; S2a-r1 N2) Pin sample vs population std; unit-test that the speaker baseline excludes the current chunk (5 of the true labels depend on it). ADR-003 evidence: formula flags de-escalations and misses flat-delivery stance flips (see S2a validator table).
+- T10 (eval-engineer, S8a; S3-r2 N4) Trim system prompt toward ≤ 550 tokens (now ~680); throughput at 8000 TPM depends on it.
+- T11 (backend-dev, S4b; S3-r1 N3/N5/N9/N10, S3-r2 N1/N6/N7) Exception log with chunk_id/session_id; parse `"c":""`→0.5 and balanced-brace scan; error-handler 4xx/5xx tests; deadline test without wall-clock bounds; SPEC §9 test names; warm-up log test; split analyzeChunk.
+- T12 (spec-architect; S3-r2 N8) SPEC §8: gate reads reports/bench-quick.md (transient, git-ignored); docs cite bench-latest.md.

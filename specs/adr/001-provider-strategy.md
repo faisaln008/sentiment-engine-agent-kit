@@ -1,5 +1,5 @@
 # ADR-001: LLM provider strategy — Groq primary, Gemini fallback, heuristic last
-Date: 2026-10-11 · Status: accepted (frozen with SPEC.md 2026-10-11; human override H2 applied — no timer hedge)
+Date: 2026-10-11 · Status: accepted (frozen with SPEC.md 2026-10-11; human override H2 applied — no timer hedge) · **Amended by [ADR-005](005-provider-amendment-cp1.md) (2026-10-11):** `llama-3.1-8b-instant` is inaccessible to the project key. The primary candidate is now `qwen/qwen3.8-27b` (effort none) vs `openai/gpt-oss-20b` (effort low), decided by the S3c A/B. Several UNVERIFIED rows below are resolved there.
 
 ## Context
 Classification needs semantic understanding (sarcasm, deflection, appeasement) at p50 < 250 ms / p95 < 500 ms,

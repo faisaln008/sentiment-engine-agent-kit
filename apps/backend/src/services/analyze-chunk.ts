@@ -7,18 +7,25 @@ import {
   type TelemetryResponse,
 } from '@app/contracts';
 import { truncate } from '../domain/truncate.js';
-import type { Classifier, LlmVerdict } from '../llm/classifier.js';
+import type { Classifier, ClassifyInput, LlmVerdict } from '../llm/classifier.js';
+import { classifyRules } from '../heuristics/rule-classifier.js';
 
 export interface AnalyzeDeps {
+  /** Primary classifier (LLM chain or heuristic). */
   classifier: Classifier;
   deadlineMs: number;
   maxTextChars: number;
+  /** Receives swallowed-exception reports (err.name/message only, never text). */
+  onError?: (err: { name: string; message: string }) => void;
 }
 
 export interface AnalyzeOutcome {
   response: TelemetryResponse;
   provider: string;
-  outcome: 'ok' | 'blank' | 'error';
+  outcome: 'ok' | 'blank' | 'fallback';
+  /** Why the primary did not answer (when outcome is `fallback`). */
+  reason?: string;
+  finish_reason?: string;
   timestamp_ms: number;
 }
 
@@ -47,7 +54,32 @@ function build(req: TelemetryRequest, v: LlmVerdict, t0: number): TelemetryRespo
   });
 }
 
-/** Use-case: validated request -> schema-valid response. Never throws; any failure yields a neutral result. */
+type Primary = Awaited<ReturnType<Classifier['classify']>>;
+
+/** Runs the primary under a deadline counted from t0. Races the signal too, so a classifier that ignores it cannot overrun. */
+async function runPrimary(
+  c: Classifier,
+  input: ClassifyInput,
+  deadlineMs: number,
+  t0: number,
+): Promise<Primary> {
+  const remaining = Math.max(1, Math.floor(deadlineMs - (performance.now() - t0)));
+  const ac = new AbortController();
+  let timer: NodeJS.Timeout | undefined;
+  const expired = new Promise<Primary>((resolve) => {
+    timer = setTimeout(() => {
+      ac.abort();
+      resolve({ ok: false, reason: 'timeout', provider: c.name, ms: remaining });
+    }, remaining);
+  });
+  try {
+    return await Promise.race([c.classify(input, ac.signal), expired]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Use-case: validated request -> schema-valid response. Never throws; any failure yields the heuristic verdict. */
 export async function analyzeChunk(
   req: TelemetryRequest,
   deps: AnalyzeDeps,
@@ -57,32 +89,49 @@ export async function analyzeChunk(
   if (isBlankText(req.text)) {
     return { response: build(req, NEUTRAL, t0), provider: 'none', outcome: 'blank', timestamp_ms };
   }
+  const { values, imputed } = withAcousticDefaults(req.acoustic_metadata);
+  const input: ClassifyInput = {
+    text: req.text.trim().slice(0, deps.maxTextChars),
+    speaker: req.speaker,
+    acoustics: values,
+    imputed,
+  };
+  let reason = 'exception';
+  let finish: string | undefined;
   try {
-    const { values, imputed } = withAcousticDefaults(req.acoustic_metadata);
-    const remaining = Math.max(1, Math.floor(deps.deadlineMs - (performance.now() - t0)));
-    const r = await deps.classifier.classify(
-      {
-        text: req.text.trim().slice(0, deps.maxTextChars),
-        speaker: req.speaker,
-        acoustics: values,
-        imputed,
-      },
-      AbortSignal.timeout(remaining),
-    );
-    if (r.ok)
+    const r = await runPrimary(deps.classifier, input, deps.deadlineMs, t0);
+    if (r.ok) {
+      const fin = r.finishReason === undefined ? {} : { finish_reason: r.finishReason };
       return {
         response: build(req, r.verdict, t0),
         provider: r.provider,
         outcome: 'ok',
         timestamp_ms,
+        ...fin,
       };
-    return {
-      response: build(req, NEUTRAL, t0),
-      provider: r.provider,
-      outcome: 'error',
-      timestamp_ms,
-    };
+    }
+    reason = r.reason;
+    finish = r.finishReason;
+  } catch (e) {
+    const err = e instanceof Error ? e : new Error('non-error thrown');
+    deps.onError?.({ name: err.name, message: err.message });
+  }
+  const h = heuristicVerdict(input);
+  return {
+    response: build(req, h, t0),
+    provider: 'heuristic',
+    outcome: 'fallback',
+    reason,
+    timestamp_ms,
+    ...(finish === undefined ? {} : { finish_reason: finish }),
+  };
+}
+
+/** Last resort when the primary fails, times out or throws. Pure and instant; guarded anyway so the endpoint can never 5xx. */
+function heuristicVerdict(input: ClassifyInput): LlmVerdict {
+  try {
+    return classifyRules(input);
   } catch {
-    return { response: build(req, NEUTRAL, t0), provider: 'none', outcome: 'error', timestamp_ms };
+    return NEUTRAL;
   }
 }

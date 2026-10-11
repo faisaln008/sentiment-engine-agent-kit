@@ -11,3 +11,7 @@ docs/assignment/
 # Local agent scratch (handoffs/reviews ARE committed; only tmp is ignored)
 .agent-work/tmp/
 .claude/settings.local.json
+
+# gate-generated, transient (orchestrator decision S3-r1 B4)
+reports/bench-quick.md
+reports/eval-smoke.md

@@ -15,20 +15,35 @@ export interface LlmVerdict {
   risk: RiskLevel;
 }
 
+export interface ContextTurn {
+  speaker: Speaker;
+  sentiment: Sentiment;
+  text: string;
+}
+
 export interface ClassifyInput {
   text: string;
   speaker: Speaker;
   acoustics: AcousticMetadata;
   imputed: readonly AcousticField[];
+  /** Last <=3 turns, oldest first (S5a fills this; absent until then). */
+  context?: readonly ContextTurn[];
+  /** Pre-rendered acoustic descriptors vs the speaker's norm (S5a); else derived from population priors. */
+  acousticNote?: string;
 }
 
 export type ClassifyResult =
-  | { ok: true; verdict: LlmVerdict; provider: string; ms: number }
+  | { ok: true; verdict: LlmVerdict; provider: string; ms: number; finishReason?: string }
   | {
       ok: false;
       reason: 'timeout' | 'rate_limited' | 'http' | 'bad_json' | 'circuit_open' | 'no_key';
       provider: string;
       ms: number;
+      finishReason?: string;
+      /** HTTP status when known (S4a: 401/403 disables a provider). */
+      status?: number;
+      /** From the `retry-after` header on 429 (S4a breaker cooldown floor). */
+      retryAfterMs?: number;
     };
 
 /** Port. Implementations never throw. */

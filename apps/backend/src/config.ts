@@ -5,6 +5,8 @@ const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'
 const posInt = (def: number) => z.coerce.number().int().positive().default(def);
 const str = (def: string) => z.string().default(def);
 
+const EFFORTS = ['none', 'minimal', 'low', 'medium', 'high'] as const;
+
 const ConfigSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   LOG_LEVEL: z
@@ -14,9 +16,11 @@ const ConfigSchema = z.object({
   LLM_PRIMARY_BASE_URL: str('https://api.groq.com/openai/v1'),
   LLM_PRIMARY_API_KEY: str(''),
   LLM_PRIMARY_MODEL: str('llama-3.1-8b-instant'),
+  LLM_PRIMARY_REASONING_EFFORT: z.enum(EFFORTS).optional(),
   LLM_FALLBACK_BASE_URL: str('https://generativelanguage.googleapis.com/v1beta/openai'),
   LLM_FALLBACK_API_KEY: str(''),
   LLM_FALLBACK_MODEL: str('gemini-3.5-flash-lite'),
+  LLM_FALLBACK_REASONING_EFFORT: z.enum(EFFORTS).optional(),
   LLM_DEADLINE_MS: posInt(450),
   LLM_MAX_TOKENS: posInt(90),
   LLM_CIRCUIT_FAILURES: posInt(3),

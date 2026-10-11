@@ -9,6 +9,8 @@ import type { ValidationError } from '@app/contracts';
 
 export interface AppDeps {
   classifier?: Classifier;
+  /** `/health.mode` provider; composition root passes the live value. Default `heuristic`. */
+  mode?: () => string;
   /** Test hook: receives pino JSON lines. */
   logStream?: Writable;
 }
@@ -28,6 +30,10 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
 
   app.setErrorHandler((err: FastifyError, _req, reply) => {
     const status = typeof err.statusCode === 'number' ? err.statusCode : 500;
+    // Never log err.message for 4xx: V8 JSON errors can quote body text. Only the code.
+    if (status >= 500)
+      app.log.error({ err: { name: err.name, message: err.message } }, 'unhandled error');
+    else app.log.debug({ code: err.code }, 'client error');
     if (status === 413) return reply.code(413).send({ error: 'payload_too_large' });
     if (status === 400 || status === 415) {
       const body: ValidationError = {
@@ -52,7 +58,8 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
     classifier: deps.classifier ?? heuristicClassifier,
     deadlineMs: config.LLM_DEADLINE_MS,
     maxTextChars: config.MAX_TEXT_CHARS,
-    mode: () => 'heuristic',
+    mode: deps.mode ?? (() => 'heuristic'),
+    onError: (e) => app.log.error({ err: e }, 'classifier exception swallowed; heuristic used'),
     version: readVersion(),
   });
   return app;
