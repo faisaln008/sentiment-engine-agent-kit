@@ -85,12 +85,12 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - [ ] Recommendation to the human (winner by macro-F1 subject to p50 < 250); backend-dev then changes the `.env.example` defaults; request to spec-architect to amend ADR-005 with the report link
 
 ## S4a — Sequential fallback chain + breaker + caps · backend-dev · 25 min · deps: S3b · review: single
-- [ ] Design input from [ADR-005](adr/005-provider-amendment-cp1.md) §5: measure `gemini-2.5-flash-lite` (n ≥ 10). If p50 ≤ ~350 ms, propose it as the fallback default (human approves), else the fallback mainly covers fast primary errors. Record the result in the handoff
-- [ ] `fallback-chain.ts` as a `Classifier` of `Classifier`s: try providers in order; move to the next **only** on `http`/`bad_json`/`rate_limited`/`circuit_open`/`no_key`/in-flight cap; **no timer hedge, no parallel calls**; next provider gets `deadline − elapsed`
-- [ ] Deadline counted from t0: on expiry abort in-flight call → heuristic immediately (timeout counts toward the breaker)
-- [ ] Per-provider breaker (`LLM_CIRCUIT_FAILURES`, `LLM_CIRCUIT_COOLDOWN_MS`, ≥ retry-after); 401/403 disables provider + recomputes `/health.mode`
-- [ ] Per-provider in-flight cap `LLM_MAX_INFLIGHT` (default 16)
-- [ ] Tests with fake classifiers + fake timers: `chain.429-falls-back`, `chain.error-falls-back`, `chain.circuit-open-skips`, `chain.slow-primary-no-hedge` (fallback never called while primary is pending), `chain.deadline-heuristic`, `chain.all-open-instant-heuristic`, `chain.bad-json-next`, `chain.single-provider`, `chain.auth-error-disables-provider`, `chain.inflight-cap-skips`
+- [x] Design input from [ADR-005](adr/005-provider-amendment-cp1.md) §5: measure `gemini-2.5-flash-lite` (n ≥ 10). If p50 ≤ ~350 ms, propose it as the fallback default (human approves), else the fallback mainly covers fast primary errors. Record the result in the handoff
+- [x] `fallback-chain.ts` as a `Classifier` of `Classifier`s: try providers in order; move to the next **only** on `http`/`bad_json`/`rate_limited`/`circuit_open`/`no_key`/in-flight cap; **no timer hedge, no parallel calls**; next provider gets `deadline − elapsed`
+- [x] Deadline counted from t0: on expiry abort in-flight call → heuristic immediately (timeout counts toward the breaker)
+- [x] Per-provider breaker (`LLM_CIRCUIT_FAILURES`, `LLM_CIRCUIT_COOLDOWN_MS`, ≥ retry-after); 401/403 disables provider + recomputes `/health.mode`
+- [x] Per-provider in-flight cap `LLM_MAX_INFLIGHT` (default 16)
+- [x] Tests with fake classifiers + fake timers: `chain.429-falls-back`, `chain.error-falls-back`, `chain.circuit-open-skips`, `chain.slow-primary-no-hedge` (fallback never called while primary is pending), `chain.deadline-heuristic`, `chain.all-open-instant-heuristic`, `chain.bad-json-next`, `chain.single-provider`, `chain.auth-error-disables-provider`, `chain.inflight-cap-skips`
 
 ## S4b — Heuristic hardening + exception safety · backend-dev · 15 min · deps: S4a, S2b · review: single
 - [ ] Fix top heuristic failure cluster from the S2 baseline report (one change, eval numbers before/after in handoff)
@@ -163,3 +163,5 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - T10 (eval-engineer, S8a; S3-r2 N4) Trim system prompt toward ≤ 550 tokens (now ~680); throughput at 8000 TPM depends on it.
 - T11 (backend-dev, S4b; S3-r1 N3/N5/N9/N10, S3-r2 N1/N6/N7) Exception log with chunk_id/session_id; parse `"c":""`→0.5 and balanced-brace scan; error-handler 4xx/5xx tests; deadline test without wall-clock bounds; SPEC §9 test names; warm-up log test; split analyzeChunk.
 - T12 (spec-architect; S3-r2 N8) SPEC §8: gate reads reports/bench-quick.md (transient, git-ignored); docs cite bench-latest.md.
+- T13 (backend-dev, S4b/any; S4a-r2 N1–N4) inflight-released throw-half call count; breaker.stuck-probe-expires test; WARN only on closed→open; strip `skip` on aborted-at-top result.
+- T14 (human/docs; S4a-r2 N5) Gemini-only deployments under LLM_DEADLINE_MS 450 are mostly heuristic (Gemini p50 ~681 ms on project key); document raising LLM_DEADLINE_MS in SETUP (trade-off: p95 > 500).

@@ -26,6 +26,8 @@ export interface AnalyzeOutcome {
   /** Why the primary did not answer (when outcome is `fallback`). */
   reason?: string;
   finish_reason?: string;
+  /** Chain skip kind when nothing was actually called. */
+  skip?: string;
   timestamp_ms: number;
 }
 
@@ -98,6 +100,7 @@ export async function analyzeChunk(
   };
   let reason = 'exception';
   let finish: string | undefined;
+  let skip: string | undefined;
   try {
     const r = await runPrimary(deps.classifier, input, deps.deadlineMs, t0);
     if (r.ok) {
@@ -112,6 +115,7 @@ export async function analyzeChunk(
     }
     reason = r.reason;
     finish = r.finishReason;
+    skip = r.skip;
   } catch (e) {
     const err = e instanceof Error ? e : new Error('non-error thrown');
     deps.onError?.({ name: err.name, message: err.message });
@@ -124,6 +128,7 @@ export async function analyzeChunk(
     reason,
     timestamp_ms,
     ...(finish === undefined ? {} : { finish_reason: finish }),
+    ...(skip === undefined ? {} : { skip }),
   };
 }
 

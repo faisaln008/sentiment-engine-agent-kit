@@ -44,6 +44,8 @@ export type ClassifyResult =
       status?: number;
       /** From the `retry-after` header on 429 (S4a breaker cooldown floor). */
       retryAfterMs?: number;
+      /** Chain-internal: why a provider was skipped without being called. */
+      skip?: 'breaker' | 'cap' | 'disabled';
     };
 
 /** Port. Implementations never throw. */

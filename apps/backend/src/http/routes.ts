@@ -66,6 +66,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
           outcome: out.outcome,
           ...(out.reason === undefined ? {} : { reason: out.reason }),
           ...(out.finish_reason === undefined ? {} : { finish_reason: out.finish_reason }),
+          ...(out.skip === undefined ? {} : { skip: out.skip }),
         },
         'chunk',
       );
