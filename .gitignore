@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+coverage/
+.DS_Store
+# The brief asks not to publish the assignment text
+docs/assignment/
+# Local agent scratch (handoffs/reviews ARE committed; only tmp is ignored)
+.agent-work/tmp/
+.claude/settings.local.json

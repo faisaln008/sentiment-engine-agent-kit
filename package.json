@@ -1,0 +1,36 @@
+{
+  "name": "sentiment-intelligence-engine",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run -w packages/contracts build && npm run -w apps/backend build",
+    "start": "npm run build && npm run -w apps/backend start",
+    "dev": "npm run -w apps/backend dev",
+    "dev:frontend": "npm run -w apps/frontend dev",
+    "typecheck": "tsc -b packages/contracts apps/backend",
+    "lint": "eslint . --max-warnings=0 && prettier --check .",
+    "test": "vitest run",
+    "eval": "npm run -w apps/backend eval",
+    "eval:smoke": "npm run -w apps/backend eval -- --smoke",
+    "bench": "npm run -w apps/backend bench",
+    "reference": "cd docs/assignment/reference-backend && npm install --silent --no-audit --no-fund && PORT=3001 node index.js",
+    "simulate": "npm run -w apps/backend simulate",
+    "gate": "node scripts/gate.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.0.0"
+  }
+}

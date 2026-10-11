@@ -1,0 +1,13 @@
+{
+  "chunk_id": "smoke_001",
+  "session_id": "smoke_session",
+  "timestamp_ms": 1760000000000,
+  "speaker": "counterpart",
+  "text": "We can probably look at the pricing again next quarter, once procurement has had time to align internally.",
+  "acoustic_metadata": {
+    "pitch_volatility": 0.35,
+    "speech_rate_wpm": 128,
+    "pause_duration_ms": 1200,
+    "volume_intensity": 0.42
+  }
+}

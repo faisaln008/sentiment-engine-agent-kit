@@ -1,0 +1,11 @@
+dist
+node_modules
+coverage
+docs
+specs
+.agent-work
+.claude
+*.md
+package-lock.json
+packages/contracts
+scripts
