@@ -46,6 +46,8 @@ export type ClassifyResult =
       status?: number;
       /** From the `retry-after` header on 429 (S4a breaker cooldown floor). */
       retryAfterMs?: number;
+      /** Which quota a 429 hit, when the provider says (TPM/TPD/RPM/RPD). */
+      limit?: 'TPM' | 'TPD' | 'RPM' | 'RPD';
       /** Chain-internal: why a provider was skipped without being called. */
       skip?: 'breaker' | 'cap' | 'disabled';
     };

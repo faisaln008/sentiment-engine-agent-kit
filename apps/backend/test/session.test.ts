@@ -188,4 +188,11 @@ describe('session', () => {
     s.commit('a', rec({ text: 'y'.repeat(5000) }));
     expect(s.snapshot('a').turns[0]?.text.length).toBeLessThanOrEqual(240);
   });
+
+  it('session.snapshot skips its own chunk_id even without a timestamp (T18)', () => {
+    const s = store();
+    s.commit('a', rec({ chunk_id: 'same', text: 'one' }));
+    s.commit('a', rec({ chunk_id: 'other', text: 'two' }));
+    expect(s.snapshot('a', undefined, 'same').turns.map((t) => t.text)).toEqual(['two']);
+  });
 });

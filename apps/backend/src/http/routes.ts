@@ -1,12 +1,21 @@
 import type { FastifyInstance } from 'fastify';
-import { TelemetryRequestSchema, LIMITS, type ValidationError } from '@app/contracts';
+import {
+  TelemetryRequestSchema,
+  LIMITS,
+  type AnalysisMessage,
+  type ValidationError,
+} from '@app/contracts';
 import { analyzeChunk, type AnalyzeDeps } from '../services/analyze-chunk.js';
 import type { SessionStore } from '../session/session-store.js';
+import { truncate } from '../domain/truncate.js';
+import { buildSummary } from '../domain/summary.js';
 
 export interface RouteDeps extends AnalyzeDeps {
   mode: () => string;
   version: string;
   sessions: SessionStore;
+  /** Called after commit, off the response path; must not throw. */
+  broadcast?: (m: AnalysisMessage) => void;
 }
 
 function rawSpeaker(body: unknown): unknown {
@@ -56,7 +65,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
       const out = await analyzeChunk(req, deps, t0, snap);
       reply.code(200).send(out.response);
       // Same tick as send(), no await in between (ADR-004): the next chunk already sees this one.
-      deps.sessions.commit(req.session_id, out.record);
+      const committed = deps.sessions.commit(req.session_id, out.record);
       request.log.info(
         {
           chunk_id: req.chunk_id,
@@ -67,10 +76,34 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
           ...(out.reason === undefined ? {} : { reason: out.reason }),
           ...(out.finish_reason === undefined ? {} : { finish_reason: out.finish_reason }),
           ...(out.skip === undefined ? {} : { skip: out.skip }),
+          ...(out.limit === undefined ? {} : { limit: out.limit }),
         },
         'chunk',
       );
+      const { broadcast } = deps;
+      // Duplicates are re-analysed and returned but not committed, so they are not re-broadcast either.
+      if (broadcast !== undefined && committed) {
+        const msg: AnalysisMessage = {
+          type: 'analysis',
+          session_id: req.session_id,
+          speaker: req.speaker,
+          text_excerpt: truncate(req.text, LIMITS.TEXT_EXCERPT_MAX),
+          timestamp_ms: out.timestamp_ms,
+          result: out.response,
+        };
+        setImmediate(() => broadcast(msg));
+      }
       return reply;
+    },
+  );
+
+  app.get<{ Params: { sessionId: string } }>(
+    '/api/telemetry/session/:sessionId/summary',
+    (request, reply) => {
+      const id = request.params.sessionId;
+      const counters = deps.sessions.counters(id);
+      if (counters === undefined) return reply.code(404).send({ error: 'session_not_found' });
+      return reply.code(200).send(buildSummary(id, counters));
     },
   );
 }

@@ -154,3 +154,36 @@ describe('heuristic uses speaker-baseline arousal (T4)', () => {
     expect(classifyRules(input(blame, 'counterpart', loud)).risk).toBe('critical');
   });
 });
+
+describe('T15 deadline without a consequence', () => {
+  it('"sign by <day>" alone is capped at high; with a consequence clause it is critical', () => {
+    const polite = classifyRules(
+      input('Please sign by Friday so we can start onboarding.', 'counterpart', {
+        pitch_volatility: 1,
+        volume_intensity: 1,
+        speech_rate_wpm: 240,
+      }),
+    );
+    expect(polite.risk).toBe('high');
+    const hard = classifyRules(input('Sign by Friday or we move to another vendor.'));
+    expect(hard.risk).toBe('critical');
+  });
+
+  it('B2: incidental "or"/"else" is not a consequence; the deadline stays capped at high', () => {
+    const acoustics = { pitch_volatility: 1, volume_intensity: 1, speech_rate_wpm: 240 };
+    for (const t of [
+      'Please sign by Friday so we can start onboarding or training.',
+      'Can you confirm by Monday whether option A or B works?',
+      'Anything else? Please decide by Friday.',
+    ]) {
+      const v = classifyRules(input(t, 'counterpart', acoustics));
+      expect(v.risk, t).not.toBe('critical');
+    }
+    expect(classifyRules(input('Sign by Friday or we move to another vendor.')).risk).toBe(
+      'critical',
+    );
+    expect(classifyRules(input('Please decide by Friday, otherwise we will cancel.')).risk).toBe(
+      'critical',
+    );
+  });
+});

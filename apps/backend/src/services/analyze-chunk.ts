@@ -36,6 +36,8 @@ export interface AnalyzeOutcome {
   finish_reason?: string;
   /** Chain skip kind when nothing was actually called. */
   skip?: string;
+  /** Quota type of a 429 (TPM/TPD/RPM/RPD) when the provider said. */
+  limit?: string;
   timestamp_ms: number;
   /** For SessionStore.commit(), called by the route right after the response is sent. */
   record: CommitRecord;
@@ -45,6 +47,7 @@ interface Why {
   reason: string;
   finish?: string | undefined;
   skip?: string | undefined;
+  limit?: string | undefined;
 }
 
 /** Use-case: validated request + arrival snapshot -> schema-valid response. Never throws. */
@@ -158,7 +161,7 @@ async function analyzeInner(
         ...fin,
       };
     }
-    why = { reason: r.reason, finish: r.finishReason, skip: r.skip };
+    why = { reason: r.reason, finish: r.finishReason, skip: r.skip, limit: r.limit };
   } catch (e) {
     report(deps, req, e);
   }
@@ -170,6 +173,7 @@ async function analyzeInner(
     timestamp_ms: ts,
     ...(why.finish === undefined ? {} : { finish_reason: why.finish }),
     ...(why.skip === undefined ? {} : { skip: why.skip }),
+    ...(why.limit === undefined ? {} : { limit: why.limit }),
   };
 }
 

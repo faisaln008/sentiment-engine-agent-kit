@@ -15,12 +15,23 @@ describe('config', () => {
     expect(c.PORT).toBe(3000);
     expect(c.LLM_DEADLINE_MS).toBe(450);
     expect(c.LOG_LEVEL).toBe('info');
-    expect(c.LLM_PRIMARY_MODEL).toBe('llama-3.1-8b-instant');
+    expect(c.LLM_PRIMARY_MODEL).toBe('qwen/qwen3.8-27b');
   });
   it('rejects out-of-range values with a readable message', () => {
     expect(() => loadConfig({ LLM_DEADLINE_MS: '0' })).toThrow(/LLM_DEADLINE_MS/);
     expect(() => loadConfig({ VOLATILITY_THRESHOLD: '1.5' })).toThrow(/VOLATILITY_THRESHOLD/);
     expect(() => loadConfig({ LOG_LEVEL: 'loud' })).toThrow(/LOG_LEVEL: must be one of/);
     expect(() => loadConfig({ PORT: '70000' })).toThrow(/PORT/);
+  });
+
+  it('primary reasoning effort: absent => none, empty => omitted, value kept', () => {
+    expect(loadConfig({}).LLM_PRIMARY_REASONING_EFFORT).toBe('none');
+    expect(
+      loadConfig({ LLM_PRIMARY_REASONING_EFFORT: '' }).LLM_PRIMARY_REASONING_EFFORT,
+    ).toBeUndefined();
+    expect(loadConfig({ LLM_PRIMARY_REASONING_EFFORT: 'low' }).LLM_PRIMARY_REASONING_EFFORT).toBe(
+      'low',
+    );
+    expect(loadConfig({}).LLM_FALLBACK_REASONING_EFFORT).toBeUndefined();
   });
 });

@@ -79,11 +79,9 @@ export class SessionStore {
     for (let i = s.records.length - 1; i >= 0; i--) {
       const r = s.records[i];
       if (r === undefined) continue;
-      const before =
-        beforeMs === undefined ||
-        r.timestamp_ms < beforeMs ||
-        (r.timestamp_ms === beforeMs && r.chunk_id !== currentChunkId);
-      if (!before) continue;
+      if (currentChunkId !== undefined && r.chunk_id === currentChunkId) continue; // never its own context
+      // Earlier OR equal timestamp counts as committed earlier (arrival order breaks ties).
+      if (beforeMs !== undefined && r.timestamp_ms > beforeMs) continue;
       if (turns.length < this.o.contextTurns) {
         turns.unshift({ speaker: r.speaker, sentiment: r.sentiment, text: r.text });
       }

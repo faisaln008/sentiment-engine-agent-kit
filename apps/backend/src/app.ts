@@ -1,12 +1,14 @@
 import type { Writable } from 'node:stream';
 import Fastify, { LogController, type FastifyError, type FastifyInstance } from 'fastify';
 import type { Config } from './config.js';
+import { registerCors, parseOrigins } from './http/cors.js';
 import { registerRoutes } from './http/routes.js';
+import { WsGateway } from './http/ws-gateway.js';
 import { heuristicClassifier } from './heuristics/rule-classifier.js';
 import { readVersion } from './infra/version.js';
 import type { Classifier } from './llm/classifier.js';
 import { SessionStore } from './session/session-store.js';
-import type { ValidationError } from '@app/contracts';
+import { LIMITS, type ValidationError } from '@app/contracts';
 
 export interface AppDeps {
   classifier?: Classifier;
@@ -25,6 +27,8 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
       : { level: config.LOG_LEVEL },
     logController: new LogController({ disableRequestLogging: true }),
     bodyLimit: 32 * 1024,
+    // ids may be 512 chars, URL-encoded up to 12 chars each (non-ASCII): the default 100 would 414 valid ids.
+    routerOptions: { maxParamLength: LIMITS.ID_MAX * 12 },
   });
 
   if (config.LLM_PRIMARY_API_KEY === '' && config.LLM_FALLBACK_API_KEY === '') {
@@ -64,8 +68,20 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
       ttlMs: config.SESSION_TTL_MS,
       contextTurns: config.CONTEXT_TURNS,
     });
+  const mode = deps.mode ?? ((): string => 'heuristic');
+  const origins = parseOrigins(config.CORS_ORIGIN);
+  registerCors(app, origins);
+  const gateway = new WsGateway({
+    server: app.server,
+    allowedOrigins: origins,
+    maxClients: config.WS_MAX_CLIENTS,
+    pingIntervalMs: config.WS_PING_INTERVAL_MS,
+    mode,
+    warn: (o, m) => app.log.warn(o, m),
+  });
   app.addHook('onClose', () => {
     sessions.stop();
+    gateway.close();
   });
 
   registerRoutes(app, {
@@ -74,7 +90,8 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
     classifier: deps.classifier ?? heuristicClassifier,
     deadlineMs: config.LLM_DEADLINE_MS,
     maxTextChars: config.MAX_TEXT_CHARS,
-    mode: deps.mode ?? (() => 'heuristic'),
+    mode,
+    broadcast: (m) => gateway.broadcast(m),
     onError: (e, ctx) =>
       app.log.error({ ...ctx, err: e }, 'classifier exception swallowed; heuristic used'),
     version: readVersion(),

@@ -349,4 +349,24 @@ describe('chain', () => {
     expect(r).toMatchObject({ ok: false, reason: 'timeout' });
     expect(r).not.toHaveProperty('skip');
   });
+
+  it('chain.attempt-failed-hook: every failed attempt is reported (with finish_reason/limit), even when a later provider answers', async () => {
+    const a = fake('groq', [
+      { ...bad('groq', 'bad_json'), finishReason: 'length' } as ClassifyResult,
+    ]);
+    const b = fake('gemini', [good('gemini')]);
+    const seen: Array<Record<string, unknown>> = [];
+    const { c } = chain([a, b], {
+      onAttemptFailed: (f) =>
+        void seen.push({ provider: f.provider, reason: f.reason, fr: f.finishReason }),
+    });
+    expect(await c.classify(input, sig())).toMatchObject({ ok: true, provider: 'gemini' });
+    expect(seen).toEqual([{ provider: 'groq', reason: 'bad_json', fr: 'length' }]);
+    const boom = chain([a, b], {
+      onAttemptFailed: () => {
+        throw new Error('logger down');
+      },
+    }).c;
+    expect(await boom.classify(input, sig())).toMatchObject({ ok: true, provider: 'gemini' });
+  });
 });

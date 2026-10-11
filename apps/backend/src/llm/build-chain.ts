@@ -1,6 +1,6 @@
 import type { Config } from '../config.js';
 import type { FetchFn } from '../infra/http-agent.js';
-import { FallbackChain } from './fallback-chain.js';
+import { FallbackChain, type Failure } from './fallback-chain.js';
 import { OpenAiCompatClassifier, type AdapterLog } from './openai-adapter.js';
 import { providerName } from './provider-name.js';
 
@@ -14,12 +14,17 @@ export interface BuiltChain {
  * Providers with a key, primary first. One key of either kind is enough: it becomes the effective primary
  * and `/health.mode` names it (SPEC §9 "Only one key").
  */
+export interface ChainHooks {
+  onDisabled: (provider: string, status: number) => void;
+  onBreakerOpen?: (provider: string, info: { retryAfterMs: number; cooldownMs: number }) => void;
+  onAttemptFailed?: (f: Failure) => void;
+}
+
 export function buildChain(
   c: Config,
   fetchFn: FetchFn,
   log: AdapterLog,
-  onDisabled: (provider: string, status: number) => void,
-  onBreakerOpen?: (provider: string, info: { retryAfterMs: number; cooldownMs: number }) => void,
+  hooks: ChainHooks,
 ): BuiltChain {
   const make = (role: 'PRIMARY' | 'FALLBACK'): OpenAiCompatClassifier | null => {
     const apiKey = c[`LLM_${role}_API_KEY`];
@@ -45,8 +50,9 @@ export function buildChain(
     circuitFailures: c.LLM_CIRCUIT_FAILURES,
     circuitCooldownMs: c.LLM_CIRCUIT_COOLDOWN_MS,
     maxInflight: c.LLM_MAX_INFLIGHT,
-    onDisabled,
-    ...(onBreakerOpen === undefined ? {} : { onBreakerOpen }),
+    onDisabled: hooks.onDisabled,
+    ...(hooks.onBreakerOpen === undefined ? {} : { onBreakerOpen: hooks.onBreakerOpen }),
+    ...(hooks.onAttemptFailed === undefined ? {} : { onAttemptFailed: hooks.onAttemptFailed }),
   });
   return { chain, providers };
 }

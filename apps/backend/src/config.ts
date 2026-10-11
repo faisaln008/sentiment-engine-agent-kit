@@ -15,7 +15,7 @@ const ConfigSchema = z.object({
   CORS_ORIGIN: str('http://localhost:5173'),
   LLM_PRIMARY_BASE_URL: str('https://api.groq.com/openai/v1'),
   LLM_PRIMARY_API_KEY: str(''),
-  LLM_PRIMARY_MODEL: str('llama-3.1-8b-instant'),
+  LLM_PRIMARY_MODEL: str('qwen/qwen3.8-27b'),
   LLM_PRIMARY_REASONING_EFFORT: z.enum(EFFORTS).optional(),
   LLM_FALLBACK_BASE_URL: str('https://generativelanguage.googleapis.com/v1beta/openai'),
   LLM_FALLBACK_API_KEY: str(''),
@@ -31,6 +31,8 @@ const ConfigSchema = z.object({
   SESSION_TTL_MS: posInt(1_800_000),
   MAX_SESSIONS: posInt(1000),
   MAX_TEXT_CHARS: posInt(2000),
+  WS_MAX_CLIENTS: posInt(50),
+  WS_PING_INTERVAL_MS: posInt(30_000),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -42,10 +44,20 @@ function dropEmpty(env: NodeJS.ProcessEnv): Record<string, string> {
   return out;
 }
 
-/** Single import point for configuration. Missing keys never throw; out-of-range values throw a readable error. */
+/**
+ * Single import point for configuration. Missing keys never throw; out-of-range values throw a readable error.
+ * `LLM_PRIMARY_REASONING_EFFORT`: absent => `none` (the CP1 default for qwen/qwen3.8-27b, ADR-005);
+ * present but empty => the field is omitted from requests (for models that reject it).
+ */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const r = ConfigSchema.safeParse(dropEmpty(env));
-  if (r.success) return r.data;
-  const lines = r.error.issues.map((i) => `  ${i.path.join('.')}: ${i.message}`);
-  throw new Error(`Invalid configuration:\n${lines.join('\n')}`);
+  if (!r.success) {
+    const lines = r.error.issues.map((i) => `  ${i.path.join('.')}: ${i.message}`);
+    throw new Error(`Invalid configuration:\n${lines.join('\n')}`);
+  }
+  const cfg: Config = { ...r.data };
+  const raw = env['LLM_PRIMARY_REASONING_EFFORT'];
+  if (raw === undefined) cfg.LLM_PRIMARY_REASONING_EFFORT = 'none';
+  else if (raw.trim() === '') delete cfg.LLM_PRIMARY_REASONING_EFFORT;
+  return cfg;
 }

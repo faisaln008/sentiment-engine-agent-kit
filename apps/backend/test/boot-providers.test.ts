@@ -5,7 +5,7 @@ import { buildChain } from '../src/llm/build-chain.js';
 const log = { warn: () => undefined, info: () => undefined };
 const noNet = (): Promise<Response> => Promise.reject(new Error('no network in tests'));
 const build = (env: Record<string, string>) =>
-  buildChain(loadConfig(env), noNet, log, () => undefined);
+  buildChain(loadConfig(env), noNet, log, { onDisabled: () => undefined });
 
 describe('boot providers (SPEC §9 only one key)', () => {
   it('no keys -> no chain, heuristic only', () => {

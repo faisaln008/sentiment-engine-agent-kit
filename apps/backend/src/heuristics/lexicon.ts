@@ -2,7 +2,15 @@
 const w = (alts: string): RegExp => new RegExp(`\\b(?:${alts})\\b`);
 
 export const ULTIMATUM = w(
-  "take it or leave it|walk(?:ing)? away|last offer|final offer|or else|non-negotiable|last chance|or we (?:walk|go elsewhere)|either\\b[^.?!]{0,80}\\bor (?:we|i)(?:'ll| will| are| am|'re)? (?:walk|go|leave|move|sign with|take our business|pull|cancel|terminate)|wasting (?:each other's|our|my) time|you(?:'ll| will) regret|(?:sign|decide|accept|respond|confirm) (?:by|before) (?:\\w+day|tomorrow|noon|midnight|the end of|end of|next week)",
+  "take it or leave it|walk(?:ing)? away|last offer|final offer|or else|non-negotiable|last chance|or we (?:walk|go elsewhere)|either\\b[^.?!]{0,80}\\bor (?:we|i)(?:'ll| will| are| am|'re)? (?:walk|go|leave|move|sign with|take our business|pull|cancel|terminate)|wasting (?:each other's|our|my) time|you(?:'ll| will) regret",
+);
+/** "sign by Friday": a deadline alone is a request; it is an ultimatum only with a consequence clause (T15). */
+export const DATE_DEADLINE = w(
+  '(?:sign|decide|accept|respond|confirm) (?:by|before) (?:\\w+day|tomorrow|noon|midnight|the end of|end of|next week)',
+);
+/** Deadline immediately followed (same clause, <= 40 chars) by an actor/threat consequence (T15, review B2). */
+export const DEADLINE_CONSEQUENCE = new RegExp(
+  `${DATE_DEADLINE.source}[^.?!]{0,40}\\b(?:or (?:else|we|i|you)|otherwise|unless|if not|else we|we(?:'ll| will) (?:walk|leave|cancel|move))\\b`,
 );
 export const BLAME = w(
   'your fault|your mistake|incompetent|ridiculous|waste of (?:my|our) time|you always|you never(?! know)|how dare you',

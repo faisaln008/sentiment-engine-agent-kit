@@ -16,13 +16,25 @@ const log = {
   info: (o: object, m: string): void => app.log.info(o, m),
 };
 
-const { chain, providers } = buildChain(
-  config,
-  createKeepAliveFetch(),
-  log,
-  (provider, status) => app.log.warn({ provider, status }, 'provider disabled after auth error'),
-  (provider, info) => app.log.warn({ provider, ...info }, 'circuit breaker opened'),
-);
+const { chain, providers } = buildChain(config, createKeepAliveFetch(), log, {
+  onDisabled: (provider, status) =>
+    app.log.warn({ provider, status }, 'provider disabled after auth error'),
+  onBreakerOpen: (provider, info) => app.log.warn({ provider, ...info }, 'circuit breaker opened'),
+  // Every failed attempt, even when a later provider answers (no text, no keys, no provider bodies).
+  onAttemptFailed: (f) =>
+    app.log.info(
+      {
+        provider: f.provider,
+        reason: f.reason,
+        ...(f.status === undefined ? {} : { status: f.status }),
+        ...(f.finishReason === undefined ? {} : { finish_reason: f.finishReason }),
+        ...(f.limit === undefined ? {} : { limit: f.limit }),
+        ...(f.retryAfterMs === undefined ? {} : { retry_after_ms: f.retryAfterMs }),
+        latency_ms: Math.round(f.ms),
+      },
+      'llm attempt failed',
+    ),
+});
 
 const sessions = new SessionStore({
   maxSessions: config.MAX_SESSIONS,

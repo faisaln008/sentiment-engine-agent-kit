@@ -34,11 +34,25 @@ function retryAfter(h: string | null): number | undefined {
 
 const JSON_MODE_RE = /response_format|json_object|json mode/i;
 
-function errorInfo(body: unknown): { code: string; namesJsonMode: boolean } {
+const REASONING_RE = /reasoning_effort|include_reasoning/i;
+
+/** Which quota a 429 hit (TPM/TPD/RPM/RPD), from the provider's message; never logs the message itself. */
+function limitType(body: unknown): 'TPM' | 'TPD' | 'RPM' | 'RPD' | undefined {
+  const m = (body as { error?: { message?: unknown } } | null)?.error?.message;
+  const hit = typeof m === 'string' ? /\b(TPM|TPD|RPM|RPD)\b/.exec(m)?.[1] : undefined;
+  return hit === 'TPM' || hit === 'TPD' || hit === 'RPM' || hit === 'RPD' ? hit : undefined;
+}
+
+function errorInfo(body: unknown): {
+  code: string;
+  namesJsonMode: boolean;
+  namesReasoning: boolean;
+} {
   const e = (body as { error?: { code?: unknown; message?: unknown } } | null)?.error;
   const code = typeof e?.code === 'string' ? e.code : '';
   const message = typeof e?.message === 'string' ? e.message : '';
-  return { code, namesJsonMode: JSON_MODE_RE.test(`${code} ${message}`) };
+  const text = `${code} ${message}`;
+  return { code, namesJsonMode: JSON_MODE_RE.test(text), namesReasoning: REASONING_RE.test(text) };
 }
 
 /**
@@ -48,6 +62,8 @@ export class OpenAiCompatClassifier implements Classifier {
   // Deliberate per-provider capability state (not request state): flipped off once, only when a 400 explicitly
   // names response_format/json mode, then every later call for this provider omits it.
   private jsonMode = true;
+  // Same idea for reasoning_effort/include_reasoning: off for good once a 400 names them.
+  private reasoning = true;
   private jsonModeLogged = false;
 
   constructor(private readonly o: AdapterOptions) {
@@ -76,12 +92,23 @@ export class OpenAiCompatClassifier implements Classifier {
           this.jsonMode = false;
           this.logJsonModeOnce();
           raw = await this.post(messages, false, signal);
+        } else if (this.reasoning && e.namesReasoning) {
+          // Model rejects reasoning_effort/include_reasoning (e.g. a llama model with the default effort):
+          // capability state, like jsonMode. Retry once without and stay off.
+          this.reasoning = false;
+          this.o.log?.warn(
+            { provider: this.name, status: 400 },
+            'adapter.reasoning-unsupported: retrying without reasoning_effort',
+          );
+          raw = await this.post(messages, this.jsonMode, signal);
         }
       }
       if (raw.kind === 'error') return fail(raw.reason);
       if (raw.status === 429) {
+        const limit = limitType(raw.body);
         return fail('rate_limited', {
           status: 429,
+          ...(limit !== undefined ? { limit } : {}),
           ...(raw.retryAfterMs !== undefined ? { retryAfterMs: raw.retryAfterMs } : {}),
         });
       }
@@ -136,7 +163,9 @@ export class OpenAiCompatClassifier implements Classifier {
   private body(messages: unknown, jsonMode: boolean): string {
     const { model, maxTokens, reasoningEffort, baseUrl } = this.o;
     const effort =
-      reasoningEffort !== undefined && reasoningEffort !== '' ? reasoningEffort : undefined;
+      this.reasoning && reasoningEffort !== undefined && reasoningEffort !== ''
+        ? reasoningEffort
+        : undefined;
     return JSON.stringify({
       model,
       temperature: 0,

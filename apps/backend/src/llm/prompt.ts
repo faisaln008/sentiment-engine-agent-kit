@@ -57,8 +57,19 @@ export function buildUserBlock(i: ClassifyInput): string {
   return lines.join('\n');
 }
 
+/**
+ * Neutralises transcript text before it enters a prompt (T18): NFKC folds look-alike delimiters (fullwidth
+ * angle brackets), invisible format characters (\p{Cf}: zero-width joiners, bidi marks) are removed so they
+ * cannot split or hide `<<<`/`>>>`, delimiters are blanked, and whitespace (incl. newlines that could fake
+ * a new prompt line) is collapsed.
+ */
 function defang(t: string): string {
-  return t.replace(/<<<|>>>/g, ' ');
+  return t
+    .normalize('NFKC')
+    .replace(/\p{Cf}/gu, '')
+    .replace(/<<<|>>>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export interface ChatMessage {

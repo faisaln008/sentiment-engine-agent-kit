@@ -28,6 +28,8 @@ interface Pick {
   sentiment: Sentiment;
   hits: number;
   ultimatum: boolean;
+  /** Deadline without a consequence: risk is capped at `high` (T15). */
+  capHigh?: boolean;
 }
 
 const count = (re: RegExp, text: string): number =>
@@ -43,9 +45,19 @@ function polarity(text: string): [number, number] {
 
 function pick(raw: string, speaker: Speaker, slow: boolean): Pick {
   const text = raw.replace(L.NEGATED_WALK_G, ' ').replace(L.APOLOGY_BUT_G, ' ');
-  const ult = count(L.ULTIMATUM, text);
+  const hard = count(L.ULTIMATUM, text);
+  const date = count(L.DATE_DEADLINE, text);
   const blame = count(L.BLAME, text);
-  if (ult + blame > 0) return { sentiment: 'aggressive', hits: ult + blame, ultimatum: ult > 0 };
+  const withConsequence = date > 0 && L.DEADLINE_CONSEQUENCE.test(text);
+  if (hard + date + blame > 0) {
+    const ultimatum = hard > 0 || withConsequence;
+    return {
+      sentiment: 'aggressive',
+      hits: hard + date + blame,
+      ultimatum,
+      capHigh: !ultimatum && blame === 0,
+    };
+  }
   const [pos, neg] = polarity(text);
   const strong = count(L.SARCASM_STRONG, text);
   const weak = pos > 0 && L.INTENSIFIER.test(text) && (L.CONTEXT_NEG.test(text) || slow);
@@ -63,7 +75,7 @@ function pick(raw: string, speaker: Speaker, slow: boolean): Pick {
 function risk(p: Pick, speaker: Speaker, hot: boolean, longPause: boolean): RiskLevel {
   switch (p.sentiment) {
     case 'aggressive':
-      return p.ultimatum || hot ? 'critical' : 'high';
+      return p.capHigh === true ? 'high' : p.ultimatum || hot ? 'critical' : 'high';
     case 'sarcastic':
       return 'high';
     case 'deflecting':
