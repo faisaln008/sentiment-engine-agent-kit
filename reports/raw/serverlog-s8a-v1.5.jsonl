@@ -1,0 +1,131 @@
+{"time":1791746371147,"level":30,"msg":"adapter.warm-up","provider":"groq","ok":true}
+{"time":1791746371560,"level":30,"msg":"adapter.warm-up","provider":"gemini","ok":true}
+{"time":1791746380664,"level":30,"msg":"chunk","chunk_id":"s01_c01","session_id":"s01_saas_renewal_outage~261011191940","provider":"groq","latency_ms":269,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746389405,"level":30,"msg":"chunk","chunk_id":"s02_c01","session_id":"s02_procurement_legal_delay~261011191940","provider":"groq","latency_ms":442,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746397740,"level":30,"msg":"chunk","chunk_id":"s03_c01","session_id":"s03_pricing_pushback_addon~261011191940","provider":"groq","latency_ms":207,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746406330,"level":30,"msg":"chunk","chunk_id":"s04_c01","session_id":"s04_competitor_bluff_cold~261011191940","provider":"groq","latency_ms":221,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746415060,"level":30,"msg":"chunk","chunk_id":"s01_c02","session_id":"s01_saas_renewal_outage~261011191940","provider":"groq","latency_ms":374,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746423572,"level":30,"msg":"chunk","chunk_id":"s02_c02","session_id":"s02_procurement_legal_delay~261011191940","provider":"groq","latency_ms":319,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746432048,"level":30,"msg":"chunk","chunk_id":"s03_c02","session_id":"s03_pricing_pushback_addon~261011191940","provider":"groq","latency_ms":221,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746440643,"level":30,"msg":"chunk","chunk_id":"s04_c02","session_id":"s04_competitor_bluff_cold~261011191940","provider":"groq","latency_ms":238,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746449205,"level":30,"msg":"chunk","chunk_id":"s01_c03","session_id":"s01_saas_renewal_outage~261011191940","provider":"groq","latency_ms":238,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746457764,"level":30,"msg":"chunk","chunk_id":"s02_c03","session_id":"s02_procurement_legal_delay~261011191940","provider":"groq","latency_ms":229,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746466394,"level":30,"msg":"chunk","chunk_id":"s03_c03","session_id":"s03_pricing_pushback_addon~261011191940","provider":"groq","latency_ms":279,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746475049,"level":30,"msg":"chunk","chunk_id":"s04_c03","session_id":"s04_competitor_bluff_cold~261011191940","provider":"groq","latency_ms":371,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746483727,"level":30,"msg":"llm attempt failed","chunk_id":"s01_c04","session_id":"s01_saas_renewal_outage~261011191940","provider":"groq","latency_ms":457,"reason":"timeout"}
+{"time":1791746483727,"level":30,"msg":"chunk","chunk_id":"s01_c04","session_id":"s01_saas_renewal_outage~261011191940","provider":"heuristic","latency_ms":478,"outcome":"fallback","reason":"timeout"}
+{"time":1791746492283,"level":30,"msg":"chunk","chunk_id":"s02_c04","session_id":"s02_procurement_legal_delay~261011191940","provider":"heuristic","latency_ms":462,"outcome":"fallback","reason":"timeout"}
+{"time":1791746500727,"level":30,"msg":"chunk","chunk_id":"s03_c04","session_id":"s03_pricing_pushback_addon~261011191940","provider":"groq","latency_ms":335,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746509415,"level":30,"msg":"llm attempt failed","chunk_id":"s04_c04","session_id":"s04_competitor_bluff_cold~261011191940","provider":"groq","latency_ms":452,"reason":"timeout"}
+{"time":1791746509415,"level":30,"msg":"chunk","chunk_id":"s04_c04","session_id":"s04_competitor_bluff_cold~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791746517832,"level":30,"msg":"chunk","chunk_id":"s01_c05","session_id":"s01_saas_renewal_outage~261011191940","provider":"groq","latency_ms":294,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746526409,"level":30,"msg":"chunk","chunk_id":"s02_c05","session_id":"s02_procurement_legal_delay~261011191940","provider":"groq","latency_ms":292,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746534949,"level":30,"msg":"chunk","chunk_id":"s03_c05","session_id":"s03_pricing_pushback_addon~261011191940","provider":"groq","latency_ms":250,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746543529,"level":30,"msg":"chunk","chunk_id":"s04_c05","session_id":"s04_competitor_bluff_cold~261011191940","provider":"groq","latency_ms":275,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746552318,"level":30,"msg":"llm attempt failed","chunk_id":"s01_c06","session_id":"s01_saas_renewal_outage~261011191940","provider":"groq","latency_ms":452,"reason":"timeout"}
+{"time":1791746552320,"level":30,"msg":"chunk","chunk_id":"s01_c06","session_id":"s01_saas_renewal_outage~261011191940","provider":"heuristic","latency_ms":454,"outcome":"fallback","reason":"timeout"}
+{"time":1791746560643,"level":30,"msg":"chunk","chunk_id":"s02_c06","session_id":"s02_procurement_legal_delay~261011191940","provider":"groq","latency_ms":251,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746569222,"level":30,"msg":"chunk","chunk_id":"s03_c06","session_id":"s03_pricing_pushback_addon~261011191940","provider":"groq","latency_ms":259,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746577759,"level":30,"msg":"chunk","chunk_id":"s04_c06","session_id":"s04_competitor_bluff_cold~261011191940","provider":"groq","latency_ms":223,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746586377,"level":30,"msg":"chunk","chunk_id":"s01_c07","session_id":"s01_saas_renewal_outage~261011191940","provider":"groq","latency_ms":263,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746594947,"level":30,"msg":"chunk","chunk_id":"s02_c07","session_id":"s02_procurement_legal_delay~261011191940","provider":"groq","latency_ms":266,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746603584,"level":30,"msg":"chunk","chunk_id":"s03_c07","session_id":"s03_pricing_pushback_addon~261011191940","provider":"groq","latency_ms":333,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746612054,"level":30,"msg":"chunk","chunk_id":"s04_c07","session_id":"s04_competitor_bluff_cold~261011191940","provider":"groq","latency_ms":230,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746620625,"level":30,"msg":"chunk","chunk_id":"s01_c08","session_id":"s01_saas_renewal_outage~261011191940","provider":"groq","latency_ms":231,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746629294,"level":30,"msg":"chunk","chunk_id":"s05_c01","session_id":"s05_competitor_bluff_heated~261011191940","provider":"groq","latency_ms":319,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746637910,"level":30,"msg":"chunk","chunk_id":"s03_c08","session_id":"s03_pricing_pushback_addon~261011191940","provider":"groq","latency_ms":372,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746646560,"level":30,"msg":"llm attempt failed","chunk_id":"s04_c08","session_id":"s04_competitor_bluff_cold~261011191940","provider":"groq","latency_ms":453,"reason":"timeout"}
+{"time":1791746646561,"level":30,"msg":"chunk","chunk_id":"s04_c08","session_id":"s04_competitor_bluff_cold~261011191940","provider":"heuristic","latency_ms":454,"outcome":"fallback","reason":"timeout"}
+{"time":1791746654941,"level":30,"msg":"chunk","chunk_id":"s06_c01","session_id":"s06_quarter_end_deadline~261011191940","provider":"groq","latency_ms":251,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746663499,"level":30,"msg":"chunk","chunk_id":"s05_c02","session_id":"s05_competitor_bluff_heated~261011191940","provider":"groq","latency_ms":247,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746672041,"level":30,"msg":"chunk","chunk_id":"s07_c01","session_id":"s07_expansion_hard_negatives~261011191940","provider":"groq","latency_ms":219,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746680663,"level":30,"msg":"chunk","chunk_id":"s08_c01","session_id":"s08_integration_delay_appease~261011191940","provider":"groq","latency_ms":270,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746689286,"level":30,"msg":"chunk","chunk_id":"s06_c02","session_id":"s06_quarter_end_deadline~261011191940","provider":"groq","latency_ms":321,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746697889,"level":30,"msg":"chunk","chunk_id":"s05_c03","session_id":"s05_competitor_bluff_heated~261011191940","provider":"groq","latency_ms":353,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746706564,"level":30,"msg":"llm attempt failed","chunk_id":"s07_c02","session_id":"s07_expansion_hard_negatives~261011191940","provider":"groq","latency_ms":454,"reason":"timeout"}
+{"time":1791746706565,"level":30,"msg":"chunk","chunk_id":"s07_c02","session_id":"s07_expansion_hard_negatives~261011191940","provider":"heuristic","latency_ms":456,"outcome":"fallback","reason":"timeout"}
+{"time":1791746715133,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c02","session_id":"s08_integration_delay_appease~261011191940","provider":"groq","latency_ms":453,"reason":"timeout"}
+{"time":1791746715134,"level":30,"msg":"chunk","chunk_id":"s08_c02","session_id":"s08_integration_delay_appease~261011191940","provider":"heuristic","latency_ms":454,"outcome":"fallback","reason":"timeout"}
+{"time":1791746723578,"level":30,"msg":"chunk","chunk_id":"s06_c03","session_id":"s06_quarter_end_deadline~261011191940","provider":"groq","latency_ms":326,"outcome":"ok","finish_reason":"stop"}
+{"time":1791746731865,"level":30,"msg":"llm attempt failed","chunk_id":"s05_c04","session_id":"s05_competitor_bluff_heated~261011191940","provider":"groq","latency_ms":45,"reason":"rate_limited","status":429,"limit":"TPD","retry_after_ms":246000}
+{"time":1791746732273,"level":30,"msg":"llm attempt failed","chunk_id":"s05_c04","session_id":"s05_competitor_bluff_heated~261011191940","provider":"gemini","latency_ms":407,"reason":"timeout"}
+{"time":1791746732274,"level":30,"msg":"chunk","chunk_id":"s05_c04","session_id":"s05_competitor_bluff_heated~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791746740443,"level":30,"msg":"llm attempt failed","chunk_id":"s07_c03","session_id":"s07_expansion_hard_negatives~261011191940","provider":"groq","latency_ms":50,"reason":"rate_limited","status":429,"limit":"TPD","retry_after_ms":220000}
+{"time":1791746740846,"level":30,"msg":"llm attempt failed","chunk_id":"s07_c03","session_id":"s07_expansion_hard_negatives~261011191940","provider":"gemini","latency_ms":401,"reason":"timeout"}
+{"time":1791746740847,"level":30,"msg":"chunk","chunk_id":"s07_c03","session_id":"s07_expansion_hard_negatives~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791746749035,"level":40,"msg":"circuit breaker opened","provider":"groq","retryAfterMs":246000,"cooldownMs":246000}
+{"time":1791746749035,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c03","session_id":"s08_integration_delay_appease~261011191940","provider":"groq","latency_ms":72,"reason":"rate_limited","status":429,"limit":"TPD","retry_after_ms":216000}
+{"time":1791746749413,"level":40,"msg":"circuit breaker opened","provider":"gemini","retryAfterMs":0,"cooldownMs":15000}
+{"time":1791746749413,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c03","session_id":"s08_integration_delay_appease~261011191940","provider":"gemini","latency_ms":377,"reason":"timeout"}
+{"time":1791746749414,"level":30,"msg":"chunk","chunk_id":"s08_c03","session_id":"s08_integration_delay_appease~261011191940","provider":"heuristic","latency_ms":451,"outcome":"fallback","reason":"timeout"}
+{"time":1791746757537,"level":30,"msg":"chunk","chunk_id":"s06_c04","session_id":"s06_quarter_end_deadline~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746766565,"level":30,"msg":"llm attempt failed","chunk_id":"s05_c05","session_id":"s05_competitor_bluff_heated~261011191940","provider":"gemini","latency_ms":451,"reason":"timeout"}
+{"time":1791746766565,"level":30,"msg":"chunk","chunk_id":"s05_c05","session_id":"s05_competitor_bluff_heated~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791746774680,"level":30,"msg":"chunk","chunk_id":"s07_c04","session_id":"s07_expansion_hard_negatives~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746783705,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c04","session_id":"s08_integration_delay_appease~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791746783706,"level":30,"msg":"chunk","chunk_id":"s08_c04","session_id":"s08_integration_delay_appease~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791746791820,"level":30,"msg":"chunk","chunk_id":"s06_c05","session_id":"s06_quarter_end_deadline~261011191940","provider":"heuristic","latency_ms":0,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746800846,"level":30,"msg":"llm attempt failed","chunk_id":"s09_c01","session_id":"s09_legal_trust_history~261011191940","provider":"gemini","latency_ms":451,"reason":"timeout"}
+{"time":1791746800846,"level":30,"msg":"chunk","chunk_id":"s09_c01","session_id":"s09_legal_trust_history~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791746808970,"level":30,"msg":"chunk","chunk_id":"s07_c05","session_id":"s07_expansion_hard_negatives~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746817991,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c05","session_id":"s08_integration_delay_appease~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791746817992,"level":30,"msg":"chunk","chunk_id":"s08_c05","session_id":"s08_integration_delay_appease~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791746826109,"level":30,"msg":"chunk","chunk_id":"s06_c06","session_id":"s06_quarter_end_deadline~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746835133,"level":30,"msg":"llm attempt failed","chunk_id":"s09_c02","session_id":"s09_legal_trust_history~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791746835134,"level":30,"msg":"chunk","chunk_id":"s09_c02","session_id":"s09_legal_trust_history~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791746843273,"level":30,"msg":"chunk","chunk_id":"s07_c06","session_id":"s07_expansion_hard_negatives~261011191940","provider":"heuristic","latency_ms":2,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746852274,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c06","session_id":"s08_integration_delay_appease~261011191940","provider":"gemini","latency_ms":453,"reason":"timeout"}
+{"time":1791746852275,"level":30,"msg":"chunk","chunk_id":"s08_c06","session_id":"s08_integration_delay_appease~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791746860396,"level":30,"msg":"chunk","chunk_id":"s06_c07","session_id":"s06_quarter_end_deadline~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746869418,"level":30,"msg":"llm attempt failed","chunk_id":"s09_c03","session_id":"s09_legal_trust_history~261011191940","provider":"gemini","latency_ms":451,"reason":"timeout"}
+{"time":1791746869419,"level":30,"msg":"chunk","chunk_id":"s09_c03","session_id":"s09_legal_trust_history~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791746877540,"level":30,"msg":"chunk","chunk_id":"s07_c07","session_id":"s07_expansion_hard_negatives~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746886560,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c07","session_id":"s08_integration_delay_appease~261011191940","provider":"gemini","latency_ms":451,"reason":"timeout"}
+{"time":1791746886561,"level":30,"msg":"chunk","chunk_id":"s08_c07","session_id":"s08_integration_delay_appease~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791746894681,"level":30,"msg":"chunk","chunk_id":"s06_c08","session_id":"s06_quarter_end_deadline~261011191940","provider":"heuristic","latency_ms":0,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746903706,"level":30,"msg":"llm attempt failed","chunk_id":"s09_c04","session_id":"s09_legal_trust_history~261011191940","provider":"gemini","latency_ms":451,"reason":"timeout"}
+{"time":1791746903707,"level":30,"msg":"chunk","chunk_id":"s09_c04","session_id":"s09_legal_trust_history~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791746911821,"level":30,"msg":"chunk","chunk_id":"s07_c08","session_id":"s07_expansion_hard_negatives~261011191940","provider":"heuristic","latency_ms":0,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746920848,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c08","session_id":"s08_integration_delay_appease~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791746920849,"level":30,"msg":"chunk","chunk_id":"s08_c08","session_id":"s08_integration_delay_appease~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791746928968,"level":30,"msg":"chunk","chunk_id":"s06_c09","session_id":"s06_quarter_end_deadline~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746937989,"level":30,"msg":"llm attempt failed","chunk_id":"s09_c05","session_id":"s09_legal_trust_history~261011191940","provider":"gemini","latency_ms":451,"reason":"timeout"}
+{"time":1791746937989,"level":30,"msg":"chunk","chunk_id":"s09_c05","session_id":"s09_legal_trust_history~261011191940","provider":"heuristic","latency_ms":451,"outcome":"fallback","reason":"timeout"}
+{"time":1791746946110,"level":30,"msg":"chunk","chunk_id":"s07_c09","session_id":"s07_expansion_hard_negatives~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746955134,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c09","session_id":"s08_integration_delay_appease~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791746955135,"level":30,"msg":"chunk","chunk_id":"s08_c09","session_id":"s08_integration_delay_appease~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791746963255,"level":30,"msg":"chunk","chunk_id":"s13_c01","session_id":"s13_buyer_sla_pressure~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746972276,"level":30,"msg":"llm attempt failed","chunk_id":"s09_c06","session_id":"s09_legal_trust_history~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791746972277,"level":30,"msg":"chunk","chunk_id":"s09_c06","session_id":"s09_legal_trust_history~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791746980397,"level":30,"msg":"chunk","chunk_id":"s14_c01","session_id":"s14_go_live_warm~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791746989417,"level":30,"msg":"llm attempt failed","chunk_id":"s08_c10","session_id":"s08_integration_delay_appease~261011191940","provider":"gemini","latency_ms":451,"reason":"timeout"}
+{"time":1791746989418,"level":30,"msg":"chunk","chunk_id":"s08_c10","session_id":"s08_integration_delay_appease~261011191940","provider":"heuristic","latency_ms":451,"outcome":"fallback","reason":"timeout"}
+{"time":1791746997885,"level":30,"msg":"chunk","chunk_id":"s13_c02","session_id":"s13_buyer_sla_pressure~261011191940","provider":"groq","latency_ms":343,"outcome":"ok","finish_reason":"stop"}
+{"time":1791747006155,"level":30,"msg":"llm attempt failed","chunk_id":"s15_c01","session_id":"s15_go_live_flat~261011191940","provider":"groq","latency_ms":46,"reason":"rate_limited","status":429,"limit":"TPD","retry_after_ms":318000}
+{"time":1791747006561,"level":30,"msg":"llm attempt failed","chunk_id":"s15_c01","session_id":"s15_go_live_flat~261011191940","provider":"gemini","latency_ms":406,"reason":"timeout"}
+{"time":1791747006562,"level":30,"msg":"chunk","chunk_id":"s15_c01","session_id":"s15_go_live_flat~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791747014725,"level":30,"msg":"llm attempt failed","chunk_id":"s14_c02","session_id":"s14_go_live_warm~261011191940","provider":"groq","latency_ms":44,"reason":"rate_limited","status":429,"limit":"TPD","retry_after_ms":318000}
+{"time":1791747014726,"level":30,"msg":"chunk","chunk_id":"s14_c02","session_id":"s14_go_live_warm~261011191940","provider":"heuristic","latency_ms":45,"outcome":"fallback","reason":"rate_limited","limit":"TPD"}
+{"time":1791747023295,"level":40,"msg":"circuit breaker opened","provider":"groq","retryAfterMs":300000,"cooldownMs":300000}
+{"time":1791747023295,"level":30,"msg":"llm attempt failed","chunk_id":"s13_c03","session_id":"s13_buyer_sla_pressure~261011191940","provider":"groq","latency_ms":42,"reason":"rate_limited","status":429,"limit":"TPD","retry_after_ms":337000}
+{"time":1791747023704,"level":30,"msg":"llm attempt failed","chunk_id":"s13_c03","session_id":"s13_buyer_sla_pressure~261011191940","provider":"gemini","latency_ms":409,"reason":"timeout"}
+{"time":1791747023705,"level":30,"msg":"chunk","chunk_id":"s13_c03","session_id":"s13_buyer_sla_pressure~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791747031839,"level":30,"msg":"chunk","chunk_id":"s15_c02","session_id":"s15_go_live_flat~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791747040858,"level":30,"msg":"llm attempt failed","chunk_id":"s14_c03","session_id":"s14_go_live_warm~261011191940","provider":"gemini","latency_ms":453,"reason":"timeout"}
+{"time":1791747040859,"level":30,"msg":"chunk","chunk_id":"s14_c03","session_id":"s14_go_live_warm~261011191940","provider":"heuristic","latency_ms":454,"outcome":"fallback","reason":"timeout"}
+{"time":1791747048968,"level":30,"msg":"chunk","chunk_id":"s13_c04","session_id":"s13_buyer_sla_pressure~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791747057991,"level":30,"msg":"llm attempt failed","chunk_id":"s15_c03","session_id":"s15_go_live_flat~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791747057992,"level":30,"msg":"chunk","chunk_id":"s15_c03","session_id":"s15_go_live_flat~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791747066111,"level":30,"msg":"chunk","chunk_id":"s14_c04","session_id":"s14_go_live_warm~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791747075139,"level":30,"msg":"llm attempt failed","chunk_id":"s13_c05","session_id":"s13_buyer_sla_pressure~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791747075140,"level":30,"msg":"chunk","chunk_id":"s13_c05","session_id":"s13_buyer_sla_pressure~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791747083253,"level":30,"msg":"chunk","chunk_id":"s15_c04","session_id":"s15_go_live_flat~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791747092276,"level":30,"msg":"llm attempt failed","chunk_id":"s14_c05","session_id":"s14_go_live_warm~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791747092277,"level":30,"msg":"chunk","chunk_id":"s14_c05","session_id":"s14_go_live_warm~261011191940","provider":"heuristic","latency_ms":453,"outcome":"fallback","reason":"timeout"}
+{"time":1791747100396,"level":30,"msg":"chunk","chunk_id":"s13_c06","session_id":"s13_buyer_sla_pressure~261011191940","provider":"heuristic","latency_ms":0,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791747109432,"level":30,"msg":"llm attempt failed","chunk_id":"s15_c05","session_id":"s15_go_live_flat~261011191940","provider":"gemini","latency_ms":451,"reason":"timeout"}
+{"time":1791747109433,"level":30,"msg":"chunk","chunk_id":"s15_c05","session_id":"s15_go_live_flat~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791747117540,"level":30,"msg":"chunk","chunk_id":"s13_c07","session_id":"s13_buyer_sla_pressure~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}
+{"time":1791747126562,"level":30,"msg":"llm attempt failed","chunk_id":"s13_c08","session_id":"s13_buyer_sla_pressure~261011191940","provider":"gemini","latency_ms":452,"reason":"timeout"}
+{"time":1791747126563,"level":30,"msg":"chunk","chunk_id":"s13_c08","session_id":"s13_buyer_sla_pressure~261011191940","provider":"heuristic","latency_ms":452,"outcome":"fallback","reason":"timeout"}
+{"time":1791747134685,"level":30,"msg":"chunk","chunk_id":"s13_c09","session_id":"s13_buyer_sla_pressure~261011191940","provider":"heuristic","latency_ms":1,"outcome":"fallback","reason":"circuit_open"}

@@ -94,6 +94,6 @@ export function traceSession(
     const v = clamp(0.4 * dz + 0.4 * dv + 0.2 * c.acoustic_metadata.pitch_volatility, 0, 1);
     for (const f of AROUSAL_FIELDS) observe(st.stats[f], c.acoustic_metadata[f]);
     st.prev = { arousal, sentiment };
-    return { chunk_id: c.chunk_id, arousal_z: arousal, v, flag: v >= VOLATILITY_THRESHOLD };
+    return { chunk_id: c.chunk_id, arousal_z: arousal, v, flag: v + 1e-9 >= VOLATILITY_THRESHOLD };
   });
 }

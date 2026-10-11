@@ -1,0 +1,4 @@
+{"time":"2026-10-11T18:48:53.869Z","prompt_version":"v1.3","model":"qwen/qwen3.8-27b","system_chars":2792,"no_context":793,"with_context":913}
+{"time":"2026-10-11T19:02:22.233Z","prompt_version":"v1.4","model":"qwen/qwen3.8-27b","system_chars":2535,"no_context":742,"with_context":862}
+{"time":"2026-10-11T19:02:40.019Z","prompt_version":"v1.4","model":"qwen/qwen3.8-27b","system_chars":2535,"system_plus_dot":701,"no_context":742,"with_context":862}
+{"time":"2026-10-11T19:19:28.253Z","prompt_version":"v1.5","model":"qwen/qwen3.8-27b","system_chars":2961,"system_plus_dot":785,"no_context":826,"with_context":946}
