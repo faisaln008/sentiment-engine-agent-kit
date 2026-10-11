@@ -10,7 +10,7 @@ export const DATE_DEADLINE = w(
 );
 /** Deadline immediately followed (same clause, <= 40 chars) by an actor/threat consequence (T15, review B2). */
 export const DEADLINE_CONSEQUENCE = new RegExp(
-  `${DATE_DEADLINE.source}[^.?!]{0,40}\\b(?:or else|or (?:we|i|you)(?:'ll| will| are| am)? (?:walk|leave|cancel|move|terminate|go|pull|escalate|stop)|otherwise|unless|if not|else we|we(?:'ll| will) (?:walk|leave|cancel|move))\\b`,
+  `${DATE_DEADLINE.source}[^.?!]{0,40}\\b(?:or else|or (?:we|i|you)(?:'ll|'re|'m| will| are| am)?(?: be)? (?:walk|leav|cancel|mov|terminat|go|pull|escalat|stop)\\w*|otherwise|unless|if not|else we|we(?:'ll| will) (?:walk|leave|cancel|move))\\b`,
 );
 export const BLAME = w(
   'your fault|your mistake|incompetent|ridiculous|waste of (?:my|our) time|you always|you never(?! know)|how dare you',

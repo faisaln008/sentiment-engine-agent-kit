@@ -113,10 +113,7 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
     mode,
     broadcast: (m) => gateway.broadcast(m),
     onError: (e, ctx) =>
-      app.log.error(
-        { ...ctx, err: safeError(e) },
-        'classifier exception swallowed; heuristic used',
-      ),
+      app.log.error({ ...ctx, err: e }, 'classifier exception swallowed; heuristic used'),
     version: readVersion(),
   });
   return app;

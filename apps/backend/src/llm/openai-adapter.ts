@@ -167,11 +167,8 @@ export class OpenAiCompatClassifier implements Classifier {
   }
 
   private body(messages: unknown, jsonMode: boolean): string {
-    const { model, maxTokens, reasoningEffort, baseUrl } = this.o;
-    const effort =
-      this.reasoning && reasoningEffort !== undefined && reasoningEffort !== ''
-        ? reasoningEffort
-        : undefined;
+    const { model, maxTokens, baseUrl } = this.o;
+    const effort = this.reasoning && this.sendsReasoning() ? this.o.reasoningEffort : undefined;
     return JSON.stringify({
       model,
       temperature: 0,

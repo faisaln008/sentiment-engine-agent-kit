@@ -9,6 +9,7 @@ import { fuse } from '../domain/fusion.js';
 import { classifyRules } from '../heuristics/rule-classifier.js';
 import type { Classifier, ClassifyInput, LlmVerdict } from '../llm/classifier.js';
 import type { CommitRecord, Snapshot } from '../session/session-store.js';
+import { safeError, type SafeError } from '../infra/safe-error.js';
 import { NEUTRAL, buildResponse } from './build-response.js';
 import { runPrimary } from './run-primary.js';
 
@@ -21,10 +22,7 @@ export interface AnalyzeDeps {
   maxTextChars: number;
   volatilityThreshold: number;
   /** Receives swallowed-exception reports: err name/message and ids only, never text. */
-  onError?: (
-    err: { name: string; message: string },
-    ctx: { chunk_id: string; session_id: string },
-  ) => void;
+  onError?: (err: SafeError, ctx: { chunk_id: string; session_id: string }) => void;
 }
 
 export interface AnalyzeOutcome {
@@ -67,11 +65,7 @@ export async function analyzeChunk(
 }
 
 function report(deps: AnalyzeDeps, req: TelemetryRequest, e: unknown): void {
-  const err = e instanceof Error ? e : new Error('non-error thrown');
-  deps.onError?.(
-    { name: err.name, message: err.message },
-    { chunk_id: req.chunk_id, session_id: req.session_id },
-  );
+  deps.onError?.(safeError(e), { chunk_id: req.chunk_id, session_id: req.session_id });
 }
 
 function neutralRecord(req: TelemetryRequest, ts: number, blank: boolean): CommitRecord {

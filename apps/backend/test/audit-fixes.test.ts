@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
+import { withAcousticDefaults } from '@app/contracts';
+import { classifyRules } from '../src/heuristics/rule-classifier.js';
 import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 import { idKey } from '../src/infra/id-key.js';
@@ -9,11 +12,17 @@ import { parseVerdict } from '../src/llm/parse.js';
 import { WsGateway, type WsLike } from '../src/http/ws-gateway.js';
 import { createServer } from 'node:http';
 
+const input = (text: string, speaker: 'candidate' | 'counterpart' = 'counterpart', am = {}) => {
+  const { values, imputed } = withAcousticDefaults(am);
+  return { text, speaker, acoustics: values, imputed };
+};
 const headers = { 'content-type': 'application/json' };
 
 describe('audit fixes', () => {
   it('S-01: HOST defaults to loopback; 0.0.0.0 only by explicit opt-in', () => {
-    expect(loadConfig({}).HOST).toBe('127.0.0.1');
+    expect(loadConfig({}).HOST).toBe('localhost'); // binds 127.0.0.1 + ::1 only (checked with lsof)
+    expect(loadConfig({ HOST: '' }).HOST).toBe('localhost'); // empty never means all interfaces
+    expect(loadConfig({ HOST: '   ' }).HOST).toBe('localhost');
     expect(loadConfig({ HOST: '0.0.0.0' }).HOST).toBe('0.0.0.0');
   });
 
@@ -159,5 +168,43 @@ describe('audit fixes', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('N1: ZodError logs only {path, code} per issue, never input values', () => {
+    const r = z.object({ s: z.enum(['a', 'b']) }).safeParse({ s: 'top secret value' });
+    if (r.success) throw new Error('unreachable');
+    const e = safeError(r.error);
+    expect(e).toEqual({
+      name: 'ZodError',
+      message: 'schema validation failed',
+      issues: [{ path: 's', code: 'invalid_value' }],
+    });
+    expect(JSON.stringify(e)).not.toContain('secret');
+  });
+
+  it('N2: inflected/contracted consequence verbs count; an innocent "or you can ..." does not', () => {
+    const hot = { pitch_volatility: 1, volume_intensity: 1, speech_rate_wpm: 240 };
+    const risk = (t: string) => classifyRules(input(t, 'counterpart', hot)).risk;
+    expect(risk("Decide by Friday or we're walking.")).toBe('critical');
+    expect(risk("Sign by Monday or I'm cancelling the contract.")).toBe('critical');
+    expect(risk('Sign by Monday or we will be moving to another vendor.')).toBe('critical');
+    expect(risk('Please confirm by Monday or you can send it to Alex.')).not.toBe('critical');
+  });
+
+  it('N8: ids are never rendered into the prompt', () => {
+    const block = buildUserBlock({
+      text: 'hello',
+      speaker: 'counterpart',
+      imputed: [],
+      acoustics: {
+        pitch_volatility: 0.3,
+        speech_rate_wpm: 150,
+        pause_duration_ms: 300,
+        volume_intensity: 0.5,
+      },
+      meta: { chunk_id: 'CHUNK-ID-123', session_id: 'SESSION-ID-456' },
+    });
+    expect(block).not.toContain('CHUNK-ID-123');
+    expect(block).not.toContain('SESSION-ID-456');
   });
 });

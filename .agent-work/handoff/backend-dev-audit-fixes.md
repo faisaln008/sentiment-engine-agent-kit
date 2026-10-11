@@ -14,3 +14,11 @@
 | T22 | yes | `or (we|i|you)` consequence needs a threat verb; reasoning-field retry only if an effort was actually sent; failed-attempt log carries `chunk_id`/`session_id` (via `ClassifyInput.meta`, never sent to a provider); heartbeat test on fake timers with an answering client (`gateway.onPong`). |
 
 Verification: typecheck, lint, tests 241 (all pass), `GATE_TARGET=http://localhost:3010 npm run gate` on a heuristic server (own PID, no LLM calls) PASS; bench p50 1 ms, p95 3 ms, errors 0. `npm run build` + loopback/LAN check above. Vite dev server started and stopped by me (own PID).
+
+## Follow-ups (audit-fixes-r1)
+- **N3:** an empty/blank `HOST=` already fell back to the default (empty values are dropped before parsing); now pinned by a test (`''`, `'   '`).
+- **N10:** HOST default is now `localhost`. Verified with `lsof` on my :3010 server: it listens on `127.0.0.1:3010` and `[::1]:3010` only; `curl` to both loopbacks works, the LAN IP is refused. `.env.example` updated to `HOST=localhost`.
+- **N2:** consequence regex accepts `'ll/'re/'m`, optional "be" and inflected verbs via stems (`walk|leav|cancel|mov|terminat|go|pull|escalat|stop` + `\w*`), still bounded to the deadline clause. Tests: "or we're walking", "or I'm cancelling", "or we will be moving" -> critical; "or you can send it to Alex" non-critical.
+- **N1:** `safeError(unknown)`; a ZodError is logged as `{name, message:"schema validation failed", issues:[{path, code}]}` (schema keys only, up to 10; test proves input values never appear). Plain `{name, message}` objects are still accepted; analyze passes the already-safe object to `onError`, the app logs it as is.
+- **N5:** `body()` reuses `sendsReasoning()`. **N7:** id-key comment corrected (128 bits: ~2^-128 per pair, ~2^-64 birthday bound). **N8:** test that `chunk_id`/`session_id` (`meta`) never appear in `buildUserBlock` output.
+- Gate (heuristic :3010, own PID, no LLM): typecheck, lint, test (244), eval:smoke, bench PASS; prettier clean.
