@@ -179,4 +179,4 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - T26 (deferred, accepted residual; audit S-03 + .agent-work/requests/contract-change-ratelimit.md) No request rate limit: loopback HOST default + timeouts + in-flight cap + breaker. If ever added: non-loopback only, over-limit answered with a 200 heuristic result (never 429), via ADR + human approval. Docs must state HOST=0.0.0.0 exposes an unauthenticated, unrate-limited API and global WS broadcast.
 - T27 (backend-dev; audit S-08) 401/403 disables a provider until restart — consider periodic re-probe.
 - T28 (eval-engineer, S8; audit S-04) run .agent-work/security/injection-cases.jsonl through the LLM chain and report flips.
-- T29 (spec-architect; audit-fixes-r1 N4) SPEC §2.3: 404 {error:"not_found"} for unknown routes; 414 {error:"invalid_request"} for over-long path ids.
+- [done 2026-10-11] T29 (spec-architect; audit-fixes-r1 N4) SPEC §2.3: 404 {error:"not_found"} for unknown routes; 414 {error:"invalid_request"} for over-long path ids.

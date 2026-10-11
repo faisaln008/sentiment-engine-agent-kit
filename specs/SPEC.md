@@ -65,7 +65,13 @@ zod 4 issue `path` is `PropertyKey[]`; the 400 body joins it with `.` (`acoustic
 ### 2.3 Errors, `/health`, summary, WS
 - **400** `{error:"invalid_request", issues:[{path, message}]}` — only for `chunk_id`/`session_id`/`text` problems or malformed JSON. Never echoes `text`.
 - **404** (summary) `{error:"session_not_found"}` (status identical to reference; body per api-contract skill).
-- **413** body too large. **No 5xx caused by the LLM path, ever.** Any unexpected exception in the service → heuristic result (logged error), not 500.
+- **404** (unknown route, any method) `{error:"not_found"}` — global not-found handler (`app.ts` `setNotFoundHandler`); never echoes the path.
+- **414** `{error:"invalid_request", issues:[{path:"", message:"identifier too long"}]}` — router-level, when a path parameter (e.g. summary `:sessionId`) exceeds Fastify `maxParamLength` = `LIMITS.ID_MAX × 12` (= 6144 encoded chars, room for a 512-char id fully percent-encoded). Other router failures (malformed URL) → **400** same body with `message:"bad request URL"`. Path never echoed (`app.ts` `frameworkErrors`).
+- **413** `{error:"payload_too_large"}` — body > 32 KB (`bodyLimit`).
+- **Unsupported Content-Type** (Fastify 415, e.g. `text/plain`) → answered as **400** `{error:"invalid_request", issues:[{path:"", message:"body must be JSON (Content-Type: application/json)"}]}`; malformed JSON → 400 same body with `message:"malformed JSON body"` (`app.ts` `setErrorHandler`). No 415 status is ever sent.
+- `ID_MAX` 512 per human decision Q7 (freeze 2026-10-11); supersedes the 128 in the api-contract skill.
+- *Clarification 2026-10-11 (T29), no schema change* — documents the already-implemented 404/414/413/content-type bodies and the ID_MAX source above; request/response schemas in `packages/contracts` unchanged.
+- **No 5xx caused by the LLM path, ever.** Any unexpected exception in the service → heuristic result (logged error), not 500.
 - `GET /health` → `{status:"ok", mode, version:<package version>, timestamp:<epoch ms>}`; `mode` = `llm:<name>` of the first **usable** provider (has key, not auth-disabled), else `heuristic`. Recomputed when a provider is disabled (§9).
 - `GET /api/telemetry/session/:sessionId/summary` → `{session_id, chunk_count, aggregated_volatility_score, dominant_sentiment, top_risk_moments[≤3]}`; each moment `{chunk_id, timestamp_ms, sentiment, risk_level, text_excerpt(≤80, real text)}`. Definitions §5.4.
 - `WS /ws/telemetry` server→client only: `{type:"hello", mode}` on connect; `{type:"analysis", session_id, speaker, text_excerpt(≤80), timestamp_ms, result:<Response>}` per chunk. Missing or mismatching `Origin` (vs `CORS_ORIGIN`) → close 1008. Max frame 16 KB.
