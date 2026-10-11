@@ -110,10 +110,10 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 - [ ] Gate green with bench; p50/p95 in handoff
 
 ## S6a — Frontend scaffold + data hook · frontend-dev · 45 min · deps: FREEZE (against reference :3001)
-- [ ] Vite + React + TS strict; imports only `@app/contracts`; proxy `/api`,`/ws` to `VITE_API_TARGET` (default :3000)
-- [ ] `useTelemetry()` store: POST responses, dedupe by `chunk_id`, zod-validated, ring buffer 200/session
-- [ ] Re-add `apps/frontend` to root `typecheck` (Vite `noEmit` is not a composite `tsc -b` reference — use `tsc --noEmit -p apps/frontend` or a composite config; coordinate the root `package.json` script line with backend-dev via request file)
-- [ ] `npm run dev:frontend` works against `npm run reference`
+- [x] Vite + React + TS strict; imports only `@app/contracts`; proxy `/api`,`/ws` to `VITE_API_TARGET` (default :3000)
+- [x] `useTelemetry()` store: POST responses, dedupe by `chunk_id`, zod-validated, ring buffer 200/session
+- [x] Re-add `apps/frontend` to root `typecheck` (Vite `noEmit` is not a composite `tsc -b` reference — use `tsc --noEmit -p apps/frontend` or a composite config; coordinate the root `package.json` script line with backend-dev via request file)
+- [x] `npm run dev:frontend` works against `npm run reference`
 
 ## S6b — Four mandatory widgets · frontend-dev · 50 min · deps: S6a
 - [ ] Traffic light (colour + icon + text; critical pulse respects reduced motion), Sentiment stream, Volatility alert (role=alert, 8 s decay), Mitigation panel (aria-live, copy)
