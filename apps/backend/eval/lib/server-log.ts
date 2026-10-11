@@ -68,6 +68,8 @@ export interface ProviderStats {
   total: number;
   providers: Map<string, number>;
   outcomes: Map<string, number>;
+  /** Fallback reasons as logged (`timeout`, `bad_json`, `rate_limited`, …). */
+  reasons: Map<string, number>;
   /** null = field never logged by the backend (not observable), number = observed count. */
   timeouts: number | null;
   rateLimited: number | null;
@@ -78,6 +80,7 @@ export interface ProviderStats {
 export function providerStats(log: ServerLog, keys: readonly string[]): ProviderStats {
   const providers = new Map<string, number>();
   const outcomes = new Map<string, number>();
+  const reasons = new Map<string, number>();
   let matched = 0;
   let timeouts = 0;
   let rateLimited = 0;
@@ -88,6 +91,7 @@ export function providerStats(log: ServerLog, keys: readonly string[]): Provider
     matched += 1;
     providers.set(e.provider, (providers.get(e.provider) ?? 0) + 1);
     outcomes.set(e.outcome, (outcomes.get(e.outcome) ?? 0) + 1);
+    if (e.reason) reasons.set(e.reason, (reasons.get(e.reason) ?? 0) + 1);
     if (e.reason === 'timeout') timeouts += 1;
     if (e.reason === 'rate_limited') rateLimited += 1;
     if (e.finishReason === 'length') length += 1;
@@ -97,6 +101,7 @@ export function providerStats(log: ServerLog, keys: readonly string[]): Provider
     total: keys.length,
     providers,
     outcomes,
+    reasons,
     timeouts: log.seen.reason ? timeouts : null,
     rateLimited: log.seen.reason ? rateLimited : null,
     lengthTruncated: log.seen.finishReason ? length : null,

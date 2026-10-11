@@ -50,7 +50,7 @@ export interface EvalMetrics {
 const mean = (xs: number[]): number =>
   xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN;
 
-function groupAcc(
+export function groupAcc(
   name: string,
   rows: LabelledChunk[],
   got: Map<string, Sentiment | null>,
@@ -159,4 +159,21 @@ function pairOutcomes(
       };
     }),
   }));
+}
+
+/** Accuracy split by the provider that answered each chunk (from the server log): does quality collapse on fallback? */
+export function perProvider(
+  rows: readonly LabelledChunk[],
+  results: readonly ChunkResult[],
+  providerOf: (r: LabelledChunk) => string | null,
+): GroupAcc[] {
+  const got = new Map(results.map((x) => [x.chunk_id, x.response?.sentiment ?? null]));
+  const names = [...new Set(rows.map((r) => providerOf(r) ?? 'not in log'))].sort();
+  return names.map((n) =>
+    groupAcc(
+      `answered by \`${n}\``,
+      rows.filter((r) => (providerOf(r) ?? 'not in log') === n),
+      got,
+    ),
+  );
 }

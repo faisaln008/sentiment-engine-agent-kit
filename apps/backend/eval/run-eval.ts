@@ -7,13 +7,19 @@
 import { parseArgs } from 'node:util';
 import { loadAll, type LabelledChunk } from './lib/dataset.js';
 import { renderEval, type Baseline } from './lib/eval-report.js';
-import { computeMetrics } from './lib/eval-metrics.js';
-import { replay } from './lib/eval-run.js';
+import { computeMetrics, perProvider } from './lib/eval-metrics.js';
+import { replay, type ChunkResult } from './lib/eval-run.js';
 import { getHealth, normTarget, Throttle } from './lib/http.js';
 import { achievedText, RATE_OPTIONS, ratePlan } from './lib/rate.js';
 import { baselineResults, writeRaw } from './lib/raw-store.js';
-import { isoStamp, safeLabel, writeHistory, writeReport } from './lib/reports.js';
-import { logKey, providerLines, providerStats, readServerLog } from './lib/server-log.js';
+import { isoStamp, pct, safeLabel, table, writeHistory, writeReport } from './lib/reports.js';
+import {
+  logKey,
+  providerLines,
+  providerStats,
+  readServerLog,
+  type ServerLog,
+} from './lib/server-log.js';
 import { has, validateDataset } from './lib/validate.js';
 
 /**
@@ -35,6 +41,7 @@ const { values: a } = parseArgs({
     'server-log': { type: 'string' },
     baseline: { type: 'string', default: 'reference' },
     'min-lenient': { type: 'string', default: String(SMOKE_MIN_LENIENT) },
+    'no-latest': { type: 'boolean', default: false },
   },
 });
 
@@ -58,6 +65,27 @@ function loadBaseline(label: string, rows: LabelledChunk[]): Baseline | null {
   return 'missing' in b
     ? { label, missing: b.missing }
     : { label: b.label, metrics: computeMetrics(rows, b.results) };
+}
+
+function providerAccuracy(
+  log: ServerLog | null,
+  rows: LabelledChunk[],
+  results: ChunkResult[],
+  runId: string,
+): string[] {
+  if (!log) return [];
+  const of = (r: LabelledChunk): string | null =>
+    log.byChunk.get(logKey(`${r.session_id}~${runId}`, r.chunk_id))?.provider ?? null;
+  const groups = perProvider(rows, results, of);
+  return [
+    '',
+    'Accuracy by answering provider (from the server log):',
+    '',
+    table(
+      ['provider', 'n', 'strict', 'lenient'],
+      groups.map((g) => [g.name, String(g.n), pct(g.strict), pct(g.lenient)]),
+    ),
+  ];
 }
 
 async function main(): Promise<void> {
@@ -119,7 +147,10 @@ async function main(): Promise<void> {
       rateAssumption: plan.assumption,
       rpmAchieved: achievedText(rpm, throttle.achievedRpm()),
       concurrency: Number(a.concurrency),
-      providerLines: providerLines(log ? providerStats(log, keys) : null, mode),
+      providerLines: [
+        ...providerLines(log ? providerStats(log, keys) : null, mode),
+        ...providerAccuracy(log, rows, results, runId),
+      ],
       smoke,
     },
     rows,
@@ -134,7 +165,7 @@ async function main(): Promise<void> {
       writeReport(`eval-${safeLabel(a.label)}.md`, md),
       writeHistory(isoStamp(), `eval-${a.label}`, md),
     );
-    if (safeLabel(a.label) !== safeLabel(a.baseline))
+    if (safeLabel(a.label) !== safeLabel(a.baseline) && !a['no-latest'])
       written.push(writeReport('eval-latest.md', md));
     written.push(writeRaw(a.label, health.mode, results));
   }

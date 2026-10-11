@@ -79,10 +79,10 @@ Non-slice phases (not counted): kickoff 40 · audit 40 · ship 60 · buffer 40.
 
 ## S3c — CP1 model A/B (mandatory): qwen3.8-27b vs gpt-oss-20b · eval-engineer · 25 min · deps: S3b, S2b, S2c · at CP1 (~2:50–3:20)
 Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessible to the project key; Q2 "regardless of scores" is preserved.
-- [ ] Run the tune split + `bench --quick` twice against our backend with env overrides only (no `.env` edits): (A) `LLM_PRIMARY_MODEL=qwen/qwen3.8-27b`, `LLM_PRIMARY_REASONING_EFFORT=none`; (B) `LLM_PRIMARY_MODEL=openai/gpt-oss-20b`, `LLM_PRIMARY_REASONING_EFFORT=low`
-- [ ] Same `LLM_MAX_TOKENS`, same prompt version, same throttle kept under the org's 8000 TPM (≈ 10 RPM at ~760 tokens; RPM noted); run regardless of nuance scores
-- [ ] `reports/ab-cp1.md`: macro-F1, nuance-subset accuracy, per-class F1, p50/p95, heuristic %, deadline-timeout %, `finish_reason:length` count, for both
-- [ ] Recommendation to the human (winner by macro-F1 subject to p50 < 250); backend-dev then changes the `.env.example` defaults; request to spec-architect to amend ADR-005 with the report link
+- [x] Run the tune split + `bench --quick` twice against our backend with env overrides only (no `.env` edits): (A) `LLM_PRIMARY_MODEL=qwen/qwen3.8-27b`, `LLM_PRIMARY_REASONING_EFFORT=none`; (B) `LLM_PRIMARY_MODEL=openai/gpt-oss-20b`, `LLM_PRIMARY_REASONING_EFFORT=low`
+- [x] Same `LLM_MAX_TOKENS`, same prompt version, same throttle kept under the org's 8000 TPM (≈ 10 RPM at ~760 tokens; RPM noted); run regardless of nuance scores
+- [x] `reports/ab-cp1.md`: macro-F1, nuance-subset accuracy, per-class F1, p50/p95, heuristic %, deadline-timeout %, `finish_reason:length` count, for both
+- [x] Recommendation to the human (winner by macro-F1 subject to p50 < 250); backend-dev then changes the `.env.example` defaults; request to spec-architect to amend ADR-005 with the report link
 
 ## S4a — Sequential fallback chain + breaker + caps · backend-dev · 25 min · deps: S3b · review: single
 - [x] Design input from [ADR-005](adr/005-provider-amendment-cp1.md) §5: measure `gemini-2.5-flash-lite` (n ≥ 10). If p50 ≤ ~350 ms, propose it as the fallback default (human approves), else the fallback mainly covers fast primary errors. Record the result in the handoff
@@ -174,3 +174,5 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - [done 2026-10-11] T21 (spec-architect; S5-r1 B2) ADR-003 §3: equal timestamp_ms ordered by arrival (orchestrator decision 2026-10-11).
 - T22 (backend-dev; S7a-S10-r2 N1/N2/N3/N5) DEADLINE_CONSEQUENCE `or (i|you)` needs a threat verb; reasoning retry only if effort was sent; failed-attempt log carries chunk_id/session_id; heartbeat test with fake timers + answering client.
 - T23 (docs-writer/security-auditor; S7a-S10 r1 N5, r2 N4) cross-session WS broadcast of excerpts to all allowed-origin clients; qwen3.8-27b is a Groq Preview model, evaluator key access may differ — SETUP model overrides.
+- T24 (backend-dev; S3c-r1 N13) scripts/gate.mjs uses p50 <= 250; CLAUDE.md §2.4 says p50 < 250 — align.
+- T25 (eval-engineer; S3c-r2 N1–N4) ab-compare.ts size split, deadline from evidence, single log parse, perProvider unit test.
