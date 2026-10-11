@@ -14,7 +14,7 @@
     "start": "npm run build && npm run -w apps/backend start",
     "dev": "npm run -w packages/contracts build && npm run -w apps/backend dev",
     "dev:frontend": "npm run -w apps/frontend dev",
-    "typecheck": "tsc -b packages/contracts apps/backend",
+    "typecheck": "tsc -b packages/contracts apps/backend && tsc -p apps/backend/tsconfig.check.json",
     "lint": "eslint . --max-warnings=0 && prettier --check .",
     "test": "vitest run",
     "eval": "npm run -w apps/backend eval",
