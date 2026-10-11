@@ -98,18 +98,18 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - [x] Each chunk logs `{chunk_id, session_id, provider, latency_ms, outcome}`; no text at info
 
 ## S5a — SessionStore + acoustic baseline + counters · backend-dev · 30 min · deps: S3b · review: paired with S5b
-- [ ] `session/` per ADR-004: snapshot (K turns ≤ 40 words, baselines, prev per speaker); commit synchronously in the same tick right after `reply.send()`; ordered insert; idempotent chunk_id Set (FIFO 5000); LRU `MAX_SESSIONS`; TTL sweep (unref'd timer)
-- [ ] Running summary counters (chunk_count, flagged_count, per-sentiment counts, bounded top-3 high/critical list) independent of the 200-record cap
-- [ ] Empty/whitespace-only text chunks: counters only, no context/baseline update
-- [ ] `domain/acoustic-baseline.ts`: Welford, priors (SPEC §4), std floor, z clamp, imputed fields skipped; descriptors for prompt
-- [ ] Tests: `session.out-of-order-commit`, `session.duplicate-idempotent`, `session.lru-evicts`, `session.auto-create`, `pipeline.client-abort-still-commits`, baseline unit tests
+- [x] `session/` per ADR-004: snapshot (K turns ≤ 40 words, baselines, prev per speaker); commit synchronously in the same tick right after `reply.send()`; ordered insert; idempotent chunk_id Set (FIFO 5000); LRU `MAX_SESSIONS`; TTL sweep (unref'd timer)
+- [x] Running summary counters (chunk_count, flagged_count, per-sentiment counts, bounded top-3 high/critical list) independent of the 200-record cap
+- [x] Empty/whitespace-only text chunks: counters only, no context/baseline update
+- [x] `domain/acoustic-baseline.ts`: Welford, priors (SPEC §4), std floor, z clamp, imputed fields skipped; descriptors for prompt
+- [x] Tests: `session.out-of-order-commit`, `session.duplicate-idempotent`, `session.lru-evicts`, `session.auto-create`, `pipeline.client-abort-still-commits`, baseline unit tests
 
 ## S5b — Fusion (volatility, confidence, risk) + concurrency · backend-dev · 30 min · deps: S5a · review: paired with S5a
-- [ ] `domain/volatility.ts`, `risk.ts`, `fusion.ts` per SPEC §5 / ADR-003, pure; order volatility → confidence → risk; unit tests for every floor/ceiling (ceiling uses calibrated confidence)
-- [ ] **Unit tests for both SPEC §5.1 worked examples:** (1) prev positive → cur aggressive, Δarousal_z = 1.5, pitch 0.8 ⇒ `v = 0.86`, flag true; (2) prev negative → cur aggressive, Δarousal_z = 0, pitch 0.2 ⇒ `v = 0.16`, flag false (threshold 0.6)
-- [ ] Prompt receives context + acoustic descriptors from S5a
-- [ ] `session.concurrency-no-bleed`: 20 sessions × 10 chunks in parallel ⇒ no context/baseline/counter bleed; `chunk_id` echo correct for 20 parallel requests
-- [ ] Gate green with bench; p50/p95 in handoff
+- [x] `domain/volatility.ts`, `risk.ts`, `fusion.ts` per SPEC §5 / ADR-003, pure; order volatility → confidence → risk; unit tests for every floor/ceiling (ceiling uses calibrated confidence)
+- [x] **Unit tests for both SPEC §5.1 worked examples:** (1) prev positive → cur aggressive, Δarousal_z = 1.5, pitch 0.8 ⇒ `v = 0.86`, flag true; (2) prev negative → cur aggressive, Δarousal_z = 0, pitch 0.2 ⇒ `v = 0.16`, flag false (threshold 0.6)
+- [x] Prompt receives context + acoustic descriptors from S5a
+- [x] `session.concurrency-no-bleed`: 20 sessions × 10 chunks in parallel ⇒ no context/baseline/counter bleed; `chunk_id` echo correct for 20 parallel requests
+- [x] Gate green with bench; p50/p95 in handoff
 
 ## S6a — Frontend scaffold + data hook · frontend-dev · 45 min · deps: FREEZE (against reference :3001)
 - [x] Vite + React + TS strict; imports only `@app/contracts`; proxy `/api`,`/ws` to `VITE_API_TARGET` (default :3000)
@@ -168,3 +168,7 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - T15 (backend-dev; S4b-r2 N2) Ultimatum date marker (`sign … by <day>`) requires a consequence clause or caps risk at high — "Please sign by Friday so we can start onboarding" is critical today.
 - T16 (docs-writer; S4b-r2 N1/N3/N4) ARCHITECTURE heuristic limitations: no sarcasm detection (tune F1 0.00), benign deferrals → deflecting/medium, tune figures are fitted (cite official holdout only), smoke threshold coincides with heuristic floor (9/15).
 - T17 (backend-dev; S4b-r1 N5/N6) emergency path provider label 'none'; error log uses err.name + allow-listed message (JSON.parse messages can quote input).
+- T18 (backend-dev; S5-r2 N1/N3) defang hardening: NFKC + strip \p{Cf} before defang, collapse whitespace in TEXT; snapshot always skips own chunk_id (missing-timestamp duplicate).
+- T19 (backend-dev; S5-r1 N8/N9/N12, S5-r2 N2) heuristic fallback arousal() uses SPEC §4 priors via domain zScores; tests for ids FIFO 5000 eviction and TTL timer unref/stop; abort test awaits server-side close; document mixed missing/relative timestamps. Security-auditor: ids Set worst case (5000 × 512 chars × MAX_SESSIONS) — consider hashing.
+- T20 (eval-engineer; S5-r1 N5, S5-r2 N4) volatility-oracle epsilon (`v + 1e-9 >= threshold`) to match domain/fusion.ts; re-run tune on prompt v1.3 before citing any LLM numbers; LLM-path bench (p50/p95, 429 count) at ~864 tokens vs 8000 TPM.
+- T21 (spec-architect; S5-r1 B2) ADR-003 §3: equal timestamp_ms ordered by arrival (orchestrator decision 2026-10-11).

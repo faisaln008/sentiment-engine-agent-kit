@@ -30,6 +30,8 @@ export interface ClassifyInput {
   context?: readonly ContextTurn[];
   /** Pre-rendered acoustic descriptors vs the speaker's norm (S5a); else derived from population priors. */
   acousticNote?: string;
+  /** Arousal z vs this speaker's baseline (S5a); the heuristic falls back to population priors without it. */
+  arousalZ?: number;
 }
 
 export type ClassifyResult =

@@ -1,13 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import { TelemetryRequestSchema, LIMITS, type ValidationError } from '@app/contracts';
 import { analyzeChunk, type AnalyzeDeps } from '../services/analyze-chunk.js';
+import type { SessionStore } from '../session/session-store.js';
 
 export interface RouteDeps extends AnalyzeDeps {
   mode: () => string;
   version: string;
+  sessions: SessionStore;
 }
-
-const MAX_WARNED_SESSIONS = 1000;
 
 function rawSpeaker(body: unknown): unknown {
   return body !== null && typeof body === 'object'
@@ -16,9 +16,6 @@ function rawSpeaker(body: unknown): unknown {
 }
 
 export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
-  // Bounded "warned once per session" memory; lives inside this closure, not module scope.
-  const warned = new Set<string>();
-
   app.get('/health', () => ({
     status: 'ok' as const,
     mode: deps.mode(),
@@ -47,16 +44,19 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
       const raw = rawSpeaker(request.body);
       const known =
         typeof raw === 'string' && ['candidate', 'counterpart'].includes(raw.trim().toLowerCase());
-      if (!known && !warned.has(req.session_id)) {
-        if (warned.size >= MAX_WARNED_SESSIONS) warned.clear();
-        warned.add(req.session_id);
+      if (!known && deps.sessions.shouldWarnUnknownSpeaker(req.session_id)) {
         request.log.warn(
           { chunk_id: req.chunk_id, session_id: req.session_id, speaker_type: typeof raw },
           'unknown or missing speaker; treating as counterpart',
         );
       }
 
-      const out = await analyzeChunk(req, deps, t0);
+      // Lock-free snapshot at arrival (ADR-004); the chunk being analysed is never in its own baseline.
+      const snap = deps.sessions.snapshot(req.session_id, req.timestamp_ms, req.chunk_id);
+      const out = await analyzeChunk(req, deps, t0, snap);
+      reply.code(200).send(out.response);
+      // Same tick as send(), no await in between (ADR-004): the next chunk already sees this one.
+      deps.sessions.commit(req.session_id, out.record);
       request.log.info(
         {
           chunk_id: req.chunk_id,
@@ -70,7 +70,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
         },
         'chunk',
       );
-      return reply.code(200).send(out.response);
+      return reply;
     },
   );
 }

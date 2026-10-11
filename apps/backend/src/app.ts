@@ -5,12 +5,15 @@ import { registerRoutes } from './http/routes.js';
 import { heuristicClassifier } from './heuristics/rule-classifier.js';
 import { readVersion } from './infra/version.js';
 import type { Classifier } from './llm/classifier.js';
+import { SessionStore } from './session/session-store.js';
 import type { ValidationError } from '@app/contracts';
 
 export interface AppDeps {
   classifier?: Classifier;
   /** `/health.mode` provider; composition root passes the live value. Default `heuristic`. */
   mode?: () => string;
+  /** Injected singleton (server.ts starts its TTL sweep); tests get a fresh private store. */
+  sessions?: SessionStore;
   /** Test hook: receives pino JSON lines. */
   logStream?: Writable;
 }
@@ -54,7 +57,20 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
     return reply.code(500).send({ error: 'internal_error' });
   });
 
+  const sessions =
+    deps.sessions ??
+    new SessionStore({
+      maxSessions: config.MAX_SESSIONS,
+      ttlMs: config.SESSION_TTL_MS,
+      contextTurns: config.CONTEXT_TURNS,
+    });
+  app.addHook('onClose', () => {
+    sessions.stop();
+  });
+
   registerRoutes(app, {
+    sessions,
+    volatilityThreshold: config.VOLATILITY_THRESHOLD,
     classifier: deps.classifier ?? heuristicClassifier,
     deadlineMs: config.LLM_DEADLINE_MS,
     maxTextChars: config.MAX_TEXT_CHARS,

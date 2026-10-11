@@ -4,6 +4,7 @@ import { loadConfig } from './config.js';
 import { createKeepAliveFetch } from './infra/http-agent.js';
 import { loadEnv } from './infra/env.js';
 import { buildChain } from './llm/build-chain.js';
+import { SessionStore } from './session/session-store.js';
 
 // Repo root is three levels up from both src/ and dist/ (apps/backend/{src,dist}/server.*).
 loadEnv(fileURLToPath(new URL('../../../.env', import.meta.url)));
@@ -23,7 +24,15 @@ const { chain, providers } = buildChain(
   (provider, info) => app.log.warn({ provider, ...info }, 'circuit breaker opened'),
 );
 
+const sessions = new SessionStore({
+  maxSessions: config.MAX_SESSIONS,
+  ttlMs: config.SESSION_TTL_MS,
+  contextTurns: config.CONTEXT_TURNS,
+});
+sessions.start();
+
 const app = buildApp(config, {
+  sessions,
   ...(chain === null ? {} : { classifier: chain }),
   mode: () => (chain === null ? 'heuristic' : chain.mode()),
 });

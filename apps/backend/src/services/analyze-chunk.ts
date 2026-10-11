@@ -1,20 +1,25 @@
 import {
-  LIMITS,
-  TelemetryResponseSchema,
   isBlankText,
   withAcousticDefaults,
   type TelemetryRequest,
   type TelemetryResponse,
 } from '@app/contracts';
-import { truncate } from '../domain/truncate.js';
-import type { Classifier, ClassifyInput, LlmVerdict } from '../llm/classifier.js';
+import { arousalZ, describeAcoustics, zScores } from '../domain/acoustic-baseline.js';
+import { fuse } from '../domain/fusion.js';
 import { classifyRules } from '../heuristics/rule-classifier.js';
+import type { Classifier, ClassifyInput, LlmVerdict } from '../llm/classifier.js';
+import type { CommitRecord, Snapshot } from '../session/session-store.js';
+import { NEUTRAL, buildResponse } from './build-response.js';
+import { runPrimary } from './run-primary.js';
+
+const HEURISTIC_CONF_CAP = 0.6;
 
 export interface AnalyzeDeps {
   /** Primary classifier (LLM chain or heuristic). */
   classifier: Classifier;
   deadlineMs: number;
   maxTextChars: number;
+  volatilityThreshold: number;
   /** Receives swallowed-exception reports: err name/message and ids only, never text. */
   onError?: (
     err: { name: string; message: string },
@@ -32,73 +37,26 @@ export interface AnalyzeOutcome {
   /** Chain skip kind when nothing was actually called. */
   skip?: string;
   timestamp_ms: number;
+  /** For SessionStore.commit(), called by the route right after the response is sent. */
+  record: CommitRecord;
 }
 
-const NEUTRAL: LlmVerdict = {
-  sentiment: 'neutral',
-  confidence: 0.5,
-  hidden_intent: 'none_detected',
-  mitigation: 'Ask one clarifying question to surface their actual position',
-  risk: 'low',
-};
-
-const round2 = (n: number): number => Math.round(Math.min(1, Math.max(0, n)) * 100) / 100;
-
-function build(req: TelemetryRequest, v: LlmVerdict, t0: number): TelemetryResponse {
-  const intent = truncate(v.hidden_intent, LIMITS.HIDDEN_INTENT_MAX, { underscore: true });
-  const mitigation = truncate(v.mitigation, LIMITS.MITIGATION_MAX);
-  return TelemetryResponseSchema.parse({
-    chunk_id: req.chunk_id,
-    processing_latency_ms: Math.max(0, Math.round(performance.now() - t0)),
-    sentiment: v.sentiment,
-    confidence: round2(v.confidence),
-    volatility_flag: false, // S5: deterministic volatility
-    hidden_intent: intent === '' ? NEUTRAL.hidden_intent : intent,
-    mitigation_suggestion: mitigation === '' ? NEUTRAL.mitigation : mitigation,
-    risk_level: v.risk,
-  });
-}
-
-type Primary = Awaited<ReturnType<Classifier['classify']>>;
-
-/** Runs the primary under a deadline counted from t0. Races the signal too, so a classifier that ignores it cannot overrun. */
-async function runPrimary(
-  c: Classifier,
-  input: ClassifyInput,
-  deadlineMs: number,
-  t0: number,
-): Promise<Primary> {
-  const remaining = Math.max(1, Math.floor(deadlineMs - (performance.now() - t0)));
-  const ac = new AbortController();
-  let timer: NodeJS.Timeout | undefined;
-  const expired = new Promise<Primary>((resolve) => {
-    timer = setTimeout(() => {
-      ac.abort();
-      resolve({ ok: false, reason: 'timeout', provider: c.name, ms: remaining });
-    }, remaining);
-  });
-  try {
-    return await Promise.race([c.classify(input, ac.signal), expired]);
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-interface FallbackWhy {
+interface Why {
   reason: string;
   finish?: string | undefined;
   skip?: string | undefined;
 }
 
-/** Use-case: validated request -> schema-valid response. Never throws; any failure yields the heuristic verdict. */
+/** Use-case: validated request + arrival snapshot -> schema-valid response. Never throws. */
 export async function analyzeChunk(
   req: TelemetryRequest,
   deps: AnalyzeDeps,
   t0: number,
+  snap: Snapshot,
 ): Promise<AnalyzeOutcome> {
   const timestamp_ms = req.timestamp_ms ?? Date.now();
   try {
-    return await analyzeInner(req, deps, t0, timestamp_ms);
+    return await analyzeInner(req, deps, t0, snap, timestamp_ms);
   } catch (e) {
     report(deps, req, e);
     return emergency(req, t0, timestamp_ms);
@@ -113,32 +71,90 @@ function report(deps: AnalyzeDeps, req: TelemetryRequest, e: unknown): void {
   );
 }
 
+function neutralRecord(req: TelemetryRequest, ts: number, blank: boolean): CommitRecord {
+  const { values, imputed } = withAcousticDefaults(req.acoustic_metadata);
+  return {
+    chunk_id: req.chunk_id,
+    timestamp_ms: ts,
+    speaker: req.speaker,
+    text: req.text.trim(),
+    sentiment: 'neutral',
+    risk: 'low',
+    flagged: false,
+    acoustics: values,
+    imputed,
+    arousalZ: 0,
+    blank,
+  };
+}
+
 async function analyzeInner(
   req: TelemetryRequest,
   deps: AnalyzeDeps,
   t0: number,
-  timestamp_ms: number,
+  snap: Snapshot,
+  ts: number,
 ): Promise<AnalyzeOutcome> {
+  const noFuse = { confidence: NEUTRAL.confidence, volatility_flag: false, risk: NEUTRAL.risk };
   if (isBlankText(req.text)) {
-    return { response: build(req, NEUTRAL, t0), provider: 'none', outcome: 'blank', timestamp_ms };
+    return {
+      response: buildResponse(req, NEUTRAL, noFuse, t0),
+      provider: 'none',
+      outcome: 'blank',
+      timestamp_ms: ts,
+      record: neutralRecord(req, ts, true),
+    };
   }
-  const { values, imputed } = withAcousticDefaults(req.acoustic_metadata);
+  const base = snap.baselines[req.speaker];
+  const wpm = base.speech_rate_wpm.n > 0 ? base.speech_rate_wpm.mean : undefined;
+  const { values, imputed } = withAcousticDefaults(req.acoustic_metadata, wpm);
+  const arousal = arousalZ(zScores(base, values, imputed));
   const input: ClassifyInput = {
     text: req.text.trim().slice(0, deps.maxTextChars),
     speaker: req.speaker,
     acoustics: values,
     imputed,
+    context: snap.turns,
+    acousticNote: describeAcoustics(values, imputed, base),
+    arousalZ: arousal,
   };
-  let why: FallbackWhy = { reason: 'exception' };
+  const finish = (v: LlmVerdict, heuristic: boolean) => {
+    const f = fuse({
+      sentiment: v.sentiment,
+      confidence: v.confidence,
+      risk: v.risk,
+      arousalZ: arousal,
+      pitchVolatility: values.pitch_volatility,
+      prev: snap.prev[req.speaker],
+      threshold: deps.volatilityThreshold,
+      ...(heuristic ? { confidenceCap: HEURISTIC_CONF_CAP } : {}),
+    });
+    const record: CommitRecord = {
+      chunk_id: req.chunk_id,
+      timestamp_ms: ts,
+      speaker: req.speaker,
+      text: input.text,
+      sentiment: v.sentiment,
+      risk: f.risk,
+      flagged: f.volatility_flag,
+      acoustics: values,
+      imputed,
+      arousalZ: arousal,
+      blank: false,
+    };
+    return { response: buildResponse(req, v, f, t0), record };
+  };
+  let why: Why = { reason: 'exception' };
   try {
     const r = await runPrimary(deps.classifier, input, deps.deadlineMs, t0);
     if (r.ok) {
       const fin = r.finishReason === undefined ? {} : { finish_reason: r.finishReason };
+      const heur = r.provider === 'heuristic';
       return {
-        response: build(req, r.verdict, t0),
+        ...finish(r.verdict, heur),
         provider: r.provider,
         outcome: 'ok',
-        timestamp_ms,
+        timestamp_ms: ts,
         ...fin,
       };
     }
@@ -146,33 +162,31 @@ async function analyzeInner(
   } catch (e) {
     report(deps, req, e);
   }
-  return fallback(req, heuristicVerdict(input), t0, timestamp_ms, why);
-}
-
-function fallback(
-  req: TelemetryRequest,
-  verdict: LlmVerdict,
-  t0: number,
-  timestamp_ms: number,
-  why: FallbackWhy,
-): AnalyzeOutcome {
   return {
-    response: build(req, verdict, t0),
+    ...finish(heuristicVerdict(input), true),
     provider: 'heuristic',
     outcome: 'fallback',
     reason: why.reason,
-    timestamp_ms,
+    timestamp_ms: ts,
     ...(why.finish === undefined ? {} : { finish_reason: why.finish }),
     ...(why.skip === undefined ? {} : { skip: why.skip }),
   };
 }
 
-/** Last line of defence (e.g. the service itself threw): neutral heuristic-labelled answer, still schema-valid. */
-function emergency(req: TelemetryRequest, t0: number, timestamp_ms: number): AnalyzeOutcome {
-  return fallback(req, NEUTRAL, t0, timestamp_ms, { reason: 'exception' });
+/** Last line of defence (the service itself threw): neutral answer, still schema-valid, committed as neutral. */
+function emergency(req: TelemetryRequest, t0: number, ts: number): AnalyzeOutcome {
+  const noFuse = { confidence: NEUTRAL.confidence, volatility_flag: false, risk: NEUTRAL.risk };
+  return {
+    response: buildResponse(req, NEUTRAL, noFuse, t0),
+    provider: 'none',
+    outcome: 'fallback',
+    reason: 'exception',
+    timestamp_ms: ts,
+    record: neutralRecord(req, ts, isBlankText(req.text)),
+  };
 }
 
-/** Last resort when the primary fails, times out or throws. Pure and instant; guarded anyway so the endpoint can never 5xx. */
+/** Last resort when the primary fails, times out or throws. Pure and instant; guarded anyway. */
 function heuristicVerdict(input: ClassifyInput): LlmVerdict {
   try {
     return classifyRules(input);

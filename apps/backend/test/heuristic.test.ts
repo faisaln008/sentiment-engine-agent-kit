@@ -141,3 +141,16 @@ describe('heuristic classifier', () => {
       expect(classifyRules(input(t)).sentiment, t).not.toBe('aggressive');
   });
 });
+
+describe('heuristic uses speaker-baseline arousal (T4)', () => {
+  it('arousalZ from the session baseline replaces the population-prior arousal', () => {
+    const blame = 'That is your fault, honestly.';
+    const base = (z: number) => ({ ...input(blame), arousalZ: z });
+    expect(classifyRules(base(0)).risk).toBe('high');
+    expect(classifyRules(base(2)).risk).toBe('critical');
+    // acoustics that look "hot" against population priors are calm for a fast talker (z = 0)
+    const loud = { speech_rate_wpm: 260, pitch_volatility: 0.9, volume_intensity: 0.95 };
+    expect(classifyRules({ ...input(blame, 'counterpart', loud), arousalZ: 0 }).risk).toBe('high');
+    expect(classifyRules(input(blame, 'counterpart', loud)).risk).toBe('critical');
+  });
+});

@@ -81,7 +81,7 @@ function risk(p: Pick, speaker: Speaker, hot: boolean, longPause: boolean): Risk
 export function classifyRules(input: ClassifyInput): LlmVerdict {
   const a = input.acoustics;
   const text = L.normalise(input.text);
-  const hot = arousal(a, input.imputed) >= 1.5;
+  const hot = (input.arousalZ ?? arousal(a, input.imputed)) >= 1.5;
   const longPause = !input.imputed.includes('pause_duration_ms') && a.pause_duration_ms >= 800;
   const slow = !input.imputed.includes('speech_rate_wpm') && a.speech_rate_wpm <= 110;
   const p = pick(text, input.speaker, slow);
