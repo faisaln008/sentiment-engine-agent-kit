@@ -54,6 +54,22 @@ describe('parse', () => {
     expect(parseVerdict('{"c":0.5}', 'counterpart')).toBeNull();
   });
 
+  it('parse.length-truncated: cut-off object is bad_json (null)', () => {
+    expect(
+      parseVerdict('{"s":"neutral","c":0.5,"i":"none_detected","m":"Ask', 'counterpart'),
+    ).toBeNull();
+  });
+
+  it('parse.balanced-scan and empty confidence', () => {
+    const v = parseVerdict(
+      'note {not json} then {"s":"neutral","c":"","i":"a}b","m":"x"} trailing }',
+      'counterpart',
+    );
+    expect(v).toBeNull(); // first balanced object is {not json}: invalid JSON => bad_json, never a wrong slice
+    const w = parseVerdict('{"s":"neutral","c":"","i":"a}b","m":"x"} trailing }', 'counterpart');
+    expect(w).toMatchObject({ confidence: 0.5, hidden_intent: 'a}b' });
+  });
+
   it('parse.empty-choices / null content / finish_reason extraction', () => {
     expect(extractContent({ choices: [] })).toEqual({ content: null, finishReason: null });
     expect(

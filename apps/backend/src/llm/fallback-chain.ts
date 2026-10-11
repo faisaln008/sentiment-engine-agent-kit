@@ -55,7 +55,11 @@ export class FallbackChain implements Classifier {
     let real: Failure | undefined; // first genuine provider failure wins over later skips
     let skipped: Failure = { ok: false, reason: 'circuit_open', provider: this.name, ms: 0 };
     for (const s of this.slots) {
-      if (signal.aborted) return { ...(real ?? skipped), reason: 'timeout' };
+      if (signal.aborted) {
+        const out: Failure = { ...(real ?? skipped), reason: 'timeout' };
+        delete out.skip; // a timeout is not a skip
+        return out;
+      }
       const skip = this.skipReason(s);
       if (skip !== null) {
         skipped = { ok: false, reason: 'circuit_open', provider: s.c.name, ms: 0, skip };

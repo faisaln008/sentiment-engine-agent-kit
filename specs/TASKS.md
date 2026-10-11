@@ -93,9 +93,9 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - [x] Tests with fake classifiers + fake timers: `chain.429-falls-back`, `chain.error-falls-back`, `chain.circuit-open-skips`, `chain.slow-primary-no-hedge` (fallback never called while primary is pending), `chain.deadline-heuristic`, `chain.all-open-instant-heuristic`, `chain.bad-json-next`, `chain.single-provider`, `chain.auth-error-disables-provider`, `chain.inflight-cap-skips`
 
 ## S4b — Heuristic hardening + exception safety · backend-dev · 15 min · deps: S4a, S2b · review: single
-- [ ] Fix top heuristic failure cluster from the S2 baseline report (one change, eval numbers before/after in handoff)
-- [ ] `pipeline.exception-falls-back`: any thrown error in service ⇒ heuristic 200
-- [ ] Each chunk logs `{chunk_id, session_id, provider, latency_ms, outcome}`; no text at info
+- [x] Fix top heuristic failure cluster from the S2 baseline report (one change, eval numbers before/after in handoff)
+- [x] `pipeline.exception-falls-back`: any thrown error in service ⇒ heuristic 200
+- [x] Each chunk logs `{chunk_id, session_id, provider, latency_ms, outcome}`; no text at info
 
 ## S5a — SessionStore + acoustic baseline + counters · backend-dev · 30 min · deps: S3b · review: paired with S5b
 - [ ] `session/` per ADR-004: snapshot (K turns ≤ 40 words, baselines, prev per speaker); commit synchronously in the same tick right after `reply.send()`; ordered insert; idempotent chunk_id Set (FIFO 5000); LRU `MAX_SESSIONS`; TTL sweep (unref'd timer)
@@ -165,3 +165,6 @@ Arms amended by [ADR-005](adr/005-provider-amendment-cp1.md): llama is inaccessi
 - T12 (spec-architect; S3-r2 N8) SPEC §8: gate reads reports/bench-quick.md (transient, git-ignored); docs cite bench-latest.md.
 - T13 (backend-dev, S4b/any; S4a-r2 N1–N4) inflight-released throw-half call count; breaker.stuck-probe-expires test; WARN only on closed→open; strip `skip` on aborted-at-top result.
 - T14 (human/docs; S4a-r2 N5) Gemini-only deployments under LLM_DEADLINE_MS 450 are mostly heuristic (Gemini p50 ~681 ms on project key); document raising LLM_DEADLINE_MS in SETUP (trade-off: p95 > 500).
+- T15 (backend-dev; S4b-r2 N2) Ultimatum date marker (`sign … by <day>`) requires a consequence clause or caps risk at high — "Please sign by Friday so we can start onboarding" is critical today.
+- T16 (docs-writer; S4b-r2 N1/N3/N4) ARCHITECTURE heuristic limitations: no sarcasm detection (tune F1 0.00), benign deferrals → deflecting/medium, tune figures are fitted (cite official holdout only), smoke threshold coincides with heuristic floor (9/15).
+- T17 (backend-dev; S4b-r1 N5/N6) emergency path provider label 'none'; error log uses err.name + allow-listed message (JSON.parse messages can quote input).

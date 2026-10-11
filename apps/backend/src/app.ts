@@ -59,7 +59,8 @@ export function buildApp(config: Config, deps: AppDeps = {}): FastifyInstance {
     deadlineMs: config.LLM_DEADLINE_MS,
     maxTextChars: config.MAX_TEXT_CHARS,
     mode: deps.mode ?? (() => 'heuristic'),
-    onError: (e) => app.log.error({ err: e }, 'classifier exception swallowed; heuristic used'),
+    onError: (e, ctx) =>
+      app.log.error({ ...ctx, err: e }, 'classifier exception swallowed; heuristic used'),
     version: readVersion(),
   });
   return app;

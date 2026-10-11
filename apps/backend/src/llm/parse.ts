@@ -59,12 +59,23 @@ export function extractContent(body: unknown): {
   return { content, finishReason: typeof c.finish_reason === 'string' ? c.finish_reason : null };
 }
 
-/** Strips ``` fences and returns the first balanced-ish `{…}` slice (first `{` to last `}`), or null. */
+/** Strips ``` fences and returns the first balanced `{…}` object (string-aware), or null. */
 function jsonSlice(text: string): string | null {
-  const unfenced = text.replace(/```(?:json)?/gi, '');
-  const a = unfenced.indexOf('{');
-  const b = unfenced.lastIndexOf('}');
-  return a >= 0 && b > a ? unfenced.slice(a, b + 1) : null;
+  const t = text.replace(/```(?:json)?/gi, '');
+  const start = t.indexOf('{');
+  if (start < 0) return null;
+  let depth = 0;
+  let inStr = false;
+  for (let i = start; i < t.length; i++) {
+    const ch = t[i];
+    if (inStr) {
+      if (ch === '\\') i++;
+      else if (ch === '"') inStr = false;
+    } else if (ch === '"') inStr = true;
+    else if (ch === '{') depth++;
+    else if (ch === '}' && --depth === 0) return t.slice(start, i + 1);
+  }
+  return null;
 }
 
 const pickKey = (o: Record<string, unknown>, ...keys: string[]): unknown => {
@@ -103,7 +114,8 @@ export function parseVerdict(content: string, speaker: Speaker): LlmVerdict | nu
   const o = obj as Record<string, unknown>;
   const sentiment = lowerEnum(pickKey(o, 's', 'sentiment'), SentimentSchema, SENTIMENT_SYNONYMS);
   if (sentiment === null) return null;
-  const rawC = Number(pickKey(o, 'c', 'confidence'));
+  const rc = pickKey(o, 'c', 'confidence');
+  const rawC = typeof rc === 'string' && rc.trim() === '' ? NaN : Number(rc);
   const confidence = Number.isFinite(rawC) ? Math.min(1, Math.max(0, rawC)) : 0.5;
   const risk =
     lowerEnum(pickKey(o, 'r', 'risk', 'risk_level'), RiskLevelSchema, RISK_SYNONYMS) ??

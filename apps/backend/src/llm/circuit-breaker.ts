@@ -45,9 +45,11 @@ export class CircuitBreaker {
     }
     if (this.consecutive >= this.failures) {
       const open = Math.max(this.cooldownMs, this.retryAfterMs);
+      const wasTripped = this.openUntil !== 0;
       this.openUntil = this.now() + open;
       this.probeUntil = 0;
-      this.onOpen?.({ retryAfterMs: this.retryAfterMs, cooldownMs: open });
+      // Report only the closed -> open transition; a failed half-open probe re-opens silently.
+      if (!wasTripped) this.onOpen?.({ retryAfterMs: this.retryAfterMs, cooldownMs: open });
     }
   }
 }

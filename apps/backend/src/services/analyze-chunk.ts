@@ -15,8 +15,11 @@ export interface AnalyzeDeps {
   classifier: Classifier;
   deadlineMs: number;
   maxTextChars: number;
-  /** Receives swallowed-exception reports (err.name/message only, never text). */
-  onError?: (err: { name: string; message: string }) => void;
+  /** Receives swallowed-exception reports: err name/message and ids only, never text. */
+  onError?: (
+    err: { name: string; message: string },
+    ctx: { chunk_id: string; session_id: string },
+  ) => void;
 }
 
 export interface AnalyzeOutcome {
@@ -81,6 +84,12 @@ async function runPrimary(
   }
 }
 
+interface FallbackWhy {
+  reason: string;
+  finish?: string | undefined;
+  skip?: string | undefined;
+}
+
 /** Use-case: validated request -> schema-valid response. Never throws; any failure yields the heuristic verdict. */
 export async function analyzeChunk(
   req: TelemetryRequest,
@@ -88,6 +97,28 @@ export async function analyzeChunk(
   t0: number,
 ): Promise<AnalyzeOutcome> {
   const timestamp_ms = req.timestamp_ms ?? Date.now();
+  try {
+    return await analyzeInner(req, deps, t0, timestamp_ms);
+  } catch (e) {
+    report(deps, req, e);
+    return emergency(req, t0, timestamp_ms);
+  }
+}
+
+function report(deps: AnalyzeDeps, req: TelemetryRequest, e: unknown): void {
+  const err = e instanceof Error ? e : new Error('non-error thrown');
+  deps.onError?.(
+    { name: err.name, message: err.message },
+    { chunk_id: req.chunk_id, session_id: req.session_id },
+  );
+}
+
+async function analyzeInner(
+  req: TelemetryRequest,
+  deps: AnalyzeDeps,
+  t0: number,
+  timestamp_ms: number,
+): Promise<AnalyzeOutcome> {
   if (isBlankText(req.text)) {
     return { response: build(req, NEUTRAL, t0), provider: 'none', outcome: 'blank', timestamp_ms };
   }
@@ -98,9 +129,7 @@ export async function analyzeChunk(
     acoustics: values,
     imputed,
   };
-  let reason = 'exception';
-  let finish: string | undefined;
-  let skip: string | undefined;
+  let why: FallbackWhy = { reason: 'exception' };
   try {
     const r = await runPrimary(deps.classifier, input, deps.deadlineMs, t0);
     if (r.ok) {
@@ -113,23 +142,34 @@ export async function analyzeChunk(
         ...fin,
       };
     }
-    reason = r.reason;
-    finish = r.finishReason;
-    skip = r.skip;
+    why = { reason: r.reason, finish: r.finishReason, skip: r.skip };
   } catch (e) {
-    const err = e instanceof Error ? e : new Error('non-error thrown');
-    deps.onError?.({ name: err.name, message: err.message });
+    report(deps, req, e);
   }
-  const h = heuristicVerdict(input);
+  return fallback(req, heuristicVerdict(input), t0, timestamp_ms, why);
+}
+
+function fallback(
+  req: TelemetryRequest,
+  verdict: LlmVerdict,
+  t0: number,
+  timestamp_ms: number,
+  why: FallbackWhy,
+): AnalyzeOutcome {
   return {
-    response: build(req, h, t0),
+    response: build(req, verdict, t0),
     provider: 'heuristic',
     outcome: 'fallback',
-    reason,
+    reason: why.reason,
     timestamp_ms,
-    ...(finish === undefined ? {} : { finish_reason: finish }),
-    ...(skip === undefined ? {} : { skip }),
+    ...(why.finish === undefined ? {} : { finish_reason: why.finish }),
+    ...(why.skip === undefined ? {} : { skip: why.skip }),
   };
+}
+
+/** Last line of defence (e.g. the service itself threw): neutral heuristic-labelled answer, still schema-valid. */
+function emergency(req: TelemetryRequest, t0: number, timestamp_ms: number): AnalyzeOutcome {
+  return fallback(req, NEUTRAL, t0, timestamp_ms, { reason: 'exception' });
 }
 
 /** Last resort when the primary fails, times out or throws. Pure and instant; guarded anyway so the endpoint can never 5xx. */

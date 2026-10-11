@@ -30,22 +30,31 @@ interface Pick {
   ultimatum: boolean;
 }
 
-function pick(text: string, speaker: Speaker, slow: boolean): Pick {
-  const count = (re: RegExp): number => text.match(new RegExp(re.source, 'g'))?.length ?? 0;
-  const ult = count(L.ULTIMATUM);
-  const blame = count(L.BLAME);
+const count = (re: RegExp, text: string): number =>
+  text.match(new RegExp(re.source, 'g'))?.length ?? 0;
+
+/** Polarity counts with negation handled (T1): returns [positive, negative] hit counts. */
+function polarity(text: string): [number, number] {
+  const negPos = count(L.NEG_POS, text);
+  const posNeg = count(L.NEG_NEG, text);
+  const rest = text.replace(L.NEG_POS_G, ' ').replace(L.NEG_NEG_G, ' ').replace(L.BENIGN_NO, ' ');
+  return [count(L.POSITIVE, rest) + posNeg, count(L.NEGATIVE, rest) + negPos];
+}
+
+function pick(raw: string, speaker: Speaker, slow: boolean): Pick {
+  const text = raw.replace(L.NEGATED_WALK_G, ' ').replace(L.APOLOGY_BUT_G, ' ');
+  const ult = count(L.ULTIMATUM, text);
+  const blame = count(L.BLAME, text);
   if (ult + blame > 0) return { sentiment: 'aggressive', hits: ult + blame, ultimatum: ult > 0 };
-  const benign = text.replace(L.BENIGN_NO, ' ');
-  const pos = count(L.POSITIVE);
-  const strong = count(L.SARCASM_STRONG);
+  const [pos, neg] = polarity(text);
+  const strong = count(L.SARCASM_STRONG, text);
   const weak = pos > 0 && L.INTENSIFIER.test(text) && (L.CONTEXT_NEG.test(text) || slow);
   if (strong > 0 || weak) return { sentiment: 'sarcastic', hits: strong + 1, ultimatum: false };
-  const def = count(L.DEFLECT);
+  const def = count(L.DEFLECT, text);
   if (def > 0) return { sentiment: 'deflecting', hits: def, ultimatum: false };
-  const app = count(L.APPEASE);
+  const app = count(L.APPEASE, text);
   if (app > 0 || (speaker === 'candidate' && /\bwhatever\b/.test(text)))
     return { sentiment: 'appeasement', hits: Math.max(app, 1), ultimatum: false };
-  const neg = benign.match(new RegExp(L.NEGATIVE.source, 'g'))?.length ?? 0;
   if (neg > pos) return { sentiment: 'negative', hits: neg, ultimatum: false };
   if (pos > 0) return { sentiment: 'positive', hits: pos, ultimatum: false };
   return { sentiment: 'neutral', hits: 0, ultimatum: false };

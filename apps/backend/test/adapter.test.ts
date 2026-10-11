@@ -229,9 +229,23 @@ describe('adapter', () => {
     expect(calls).toHaveLength(0);
   });
 
-  it('adapter.warm-up never throws', async () => {
-    const { fetchFn } = fake([new Error('down')]);
-    await expect(make(fetchFn).warmUp()).resolves.toBeUndefined();
+  it('adapter.warm-up never throws and logs {provider, ok, reason, status}', async () => {
+    const infos: Array<Record<string, unknown>> = [];
+    const log = {
+      warn: () => undefined,
+      info: (o: object) => infos.push(o as Record<string, unknown>),
+    };
+    const down = fake([new Error('down')]);
+    await expect(make(down.fetchFn, { log }).warmUp()).resolves.toBeUndefined();
+    const nf = fake([new Response('{}', { status: 404 })]);
+    await make(nf.fetchFn, { log }).warmUp();
+    const fine = fake([ok()]);
+    await make(fine.fetchFn, { log }).warmUp();
+    expect(infos).toEqual([
+      { provider: 'groq', ok: false, reason: 'http' },
+      { provider: 'groq', ok: false, reason: 'http', status: 404 },
+      { provider: 'groq', ok: true },
+    ]);
   });
 });
 

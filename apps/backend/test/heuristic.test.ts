@@ -68,4 +68,76 @@ describe('heuristic classifier', () => {
     for (let n = 0; n < 1000; n++) classifyRules(i);
     expect((performance.now() - t) / 1000).toBeLessThan(0.5);
   });
+
+  it('T1 negation: "not good" is negative, "not bad at all" is positive, negated walk-away is not an ultimatum', () => {
+    expect(classifyRules(input('This is not good for our budget.')).sentiment).toBe('negative');
+    expect(classifyRules(input('The rollout was not bad at all.')).sentiment).toBe('positive');
+    expect(
+      classifyRules(input("We don't want to walk away from this partnership.")).sentiment,
+    ).not.toBe('aggressive');
+    expect(classifyRules(input('We will walk away unless this changes.')).sentiment).toBe(
+      'aggressive',
+    );
+  });
+
+  it('T2 over-broad markers: sincere or incidental uses are not flagged', () => {
+    expect(
+      classifyRules(input('Great, we can sign today if the paperwork is ready.')).sentiment,
+    ).not.toBe('aggressive');
+    expect(
+      classifyRules(input('You never know with migrations, so keep a buffer.')).sentiment,
+    ).not.toBe('aggressive');
+    expect(classifyRules(input('Thanks a lot for the quick turnaround.')).sentiment).not.toBe(
+      'sarcastic',
+    );
+    expect(classifyRules(input('Please make sure the invoice is attached.')).sentiment).not.toBe(
+      'sarcastic',
+    );
+    expect(classifyRules(input('Legal approved the draft yesterday.')).sentiment).not.toBe(
+      'deflecting',
+    );
+    expect(classifyRules(input('Welcome on board, kickoff is Monday.')).sentiment).not.toBe(
+      'deflecting',
+    );
+    expect(classifyRules(input('The steering group needs to weigh in first.')).sentiment).toBe(
+      'deflecting',
+    );
+    expect(classifyRules(input('Sign by Friday or we revisit the whole plan.')).sentiment).toBe(
+      'aggressive',
+    );
+  });
+
+  it('B2 regression probes: benign speech is not flagged as aggressive/sarcastic/deflecting/appeasement', () => {
+    const not = (text: string, bad: Sentiment): void =>
+      expect(classifyRules(input(text)).sentiment, text).not.toBe(bad);
+    not('We can do either the annual or the monthly plan, whichever you prefer.', 'aggressive');
+    not('Either Tuesday or Wednesday works for the kickoff call.', 'aggressive');
+    not('Wow, that is a great offer, thank you.', 'sarcastic');
+    not('Thanks for being so flexible with the schedule.', 'sarcastic');
+    not('I suppose that could work for us.', 'sarcastic');
+    not("That's not good enough for us, but let's keep talking.", 'aggressive');
+    not('We understand your concern and will look at the numbers.', 'appeasement');
+    not('Trust me, this is the best tier for your team size.', 'deflecting');
+    not("I'm sorry, but that price is unacceptable.", 'appeasement');
+  });
+
+  it('kept families fire (reworded, invented): consequence ultimatum, deferral, concession, apology', () => {
+    const is = (text: string, want: Sentiment, speaker: Speaker = 'counterpart'): void =>
+      expect(classifyRules(input(text, speaker)).sentiment, text).toBe(want);
+    is('Either you cut the fee or we walk from this deal.', 'aggressive');
+    is('We are wasting my time with these revisions.', 'aggressive');
+    is('Let me circle back with you sometime next week.', 'deflecting');
+    is('I am looking into it and will revert shortly.', 'deflecting');
+    is('We are so sorry for the confusion on our side.', 'appeasement', 'candidate');
+    is('Let me see what I can do about the rate.', 'appeasement', 'candidate');
+  });
+
+  it("N3: negated walk-away covers won't / will not / wouldn't", () => {
+    for (const t of [
+      "We won't walk away over a small delay.",
+      'We will not walk away from this.',
+      "We wouldn't walk away now.",
+    ])
+      expect(classifyRules(input(t)).sentiment, t).not.toBe('aggressive');
+  });
 });

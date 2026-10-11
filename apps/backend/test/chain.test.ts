@@ -310,4 +310,43 @@ describe('chain', () => {
     expect(await two.classify(input, sig())).toMatchObject({ ok: true, provider: 'groq' });
     expect(hang.calls).toBe(2);
   });
+
+  it('breaker.stuck-probe-expires: a probe that never reports is retried after one more cooldown', async () => {
+    const a = fake('groq', [
+      bad('groq', 'http'),
+      bad('groq', 'http'),
+      bad('groq', 'http'),
+      () => new Promise<ClassifyResult>(() => undefined),
+      good('groq'),
+    ]);
+    const b = fake('gemini', [good('gemini')]);
+    const { c, advance } = chain([a, b]);
+    for (let i = 0; i < 3; i++) await c.classify(input, sig());
+    advance(15_001);
+    void c.classify(input, sig()); // stuck probe
+    await c.classify(input, sig()); // refused -> gemini
+    expect(a.calls).toBe(4);
+    advance(15_001);
+    expect(await c.classify(input, sig())).toMatchObject({ provider: 'groq' });
+    expect(a.calls).toBe(5);
+  });
+
+  it('breaker.warn-only-on-closed-to-open', async () => {
+    const a = fake('groq', [bad('groq', 'http')]);
+    const opened: string[] = [];
+    const { c, advance } = chain([a], { onBreakerOpen: (p) => opened.push(p) });
+    for (let i = 0; i < 3; i++) await c.classify(input, sig());
+    advance(15_001);
+    await c.classify(input, sig()); // failed probe re-opens
+    expect(opened).toEqual(['groq']);
+  });
+
+  it('chain.aborted-at-top returns plain timeout without a skip marker', async () => {
+    const a = fake('groq', [good('groq')]);
+    const ac = new AbortController();
+    ac.abort();
+    const r = await chain([a]).c.classify(input, ac.signal);
+    expect(r).toMatchObject({ ok: false, reason: 'timeout' });
+    expect(r).not.toHaveProperty('skip');
+  });
 });
